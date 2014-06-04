@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.covito.kit.exception.FileNotFoundException;
 
 /**
  * 资源文件读取类<br/>
@@ -44,7 +45,7 @@ public class ResourceReader {
 	 * <功能详细描述>
 	 * 
 	 * @author eighteencold
-	 * @param path
+	 * @param name 配置文件位置
 	 * @return
 	 */
 	private static ResourceReader getInstance(String name) {
@@ -66,7 +67,6 @@ public class ResourceReader {
 		InputStream is = getClass().getResourceAsStream(name);
 		if(is==null){
 			log.error("can't find file ["+name+"]");
-			return;
 		}
 		try {
 			config.load(is);
@@ -78,6 +78,15 @@ public class ResourceReader {
 
 	
 
+	/** 
+	 * 获取指定的资源文件中指定key的值
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @param name 资源文件位置
+	 * @param key 
+	 * @return
+	 */
 	public static String getValue(String name, String key) {
 		String re = getInstance(name).config.getProperty(key);
 		if (re == null) {
@@ -93,11 +102,35 @@ public class ResourceReader {
 	}
 	
 	/** 
+	 * 获取指定的资源文件中指定key的值，当找不到时返回默认值
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito 资源文件位置
+	 * @param name
+	 * @param key 
+	 * @param defValue 默认值
+	 * @return
+	 */
+	public static String getValue(String name, String key,String defValue) {
+		String re = getInstance(name).config.getProperty(key);
+		if (re == null) {
+			return defValue;
+		}
+		for (; re.indexOf("${") >= 0;) {
+			String para = re.substring(re.indexOf("${") + 2, re.indexOf("}"));
+			if (getValue(name, para) != null) {
+				re = re.replace("${" + para + "}", getValue(name, para));
+			}
+		}
+		return re;
+	}
+	
+	/** 
 	 * 获取<br/>
 	 * <功能详细描述>
 	 *
 	 * @author  eighteencold
-	 * @param name
+	 * @param name 配置文件位置
 	 * @return
 	 */
 	public static Map<String,String> getAll(String name) {
