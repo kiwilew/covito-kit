@@ -1,22 +1,25 @@
 /*
-* Copyright 2010-2014  All rights reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy
-* of the License at
-*
-*   http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-* License for the specific language governing permissions and limitations
-* under the License.
-*
-*/
+ * Copyright 2010-2014  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ *
+ */
 package org.covito.kit.web.file.support;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,17 +27,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.covito.kit.web.file.FileInfos;
-import org.covito.kit.web.file.FileService;
 import org.covito.kit.web.file.FileServiceException;
 import org.covito.kit.web.file.common.AbstractFileServiceImpl;
 import org.covito.kit.web.file.fastdfs.ClientGlobal;
 import org.covito.kit.web.file.fastdfs.DownloadStream;
 import org.covito.kit.web.file.fastdfs.FileInfo;
+import org.covito.kit.web.file.fastdfs.ProtoCommon;
 import org.covito.kit.web.file.fastdfs.StorageClient;
 import org.covito.kit.web.file.fastdfs.TrackerClient;
 import org.covito.kit.web.file.fastdfs.TrackerServer;
-import org.covito.kit.web.file.fastdfs.Upload;
 import org.covito.kit.web.file.fastdfs.UploadCallback;
+import org.covito.kit.web.file.fastdfs.UploadStream;
 import org.covito.kit.web.file.fastdfs.common.FastdfsException;
 import org.covito.kit.web.file.fastdfs.common.NameValuePair;
 import org.slf4j.Logger;
@@ -42,23 +45,35 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Fastdfs实现
- * <p>功能详细描述</p>
+ * <p>
+ * 功能详细描述
+ * </p>
  * 
- * @author  covito
- * @version  [v1.0, 2014-6-4]
+ * @author covito
+ * @version [v1.0, 2014-6-4]
  */
-public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
-	
+public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
+
 	public String confPath = "fastdfs_client.properties";
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
+
+	protected String docRoot;
 	
+	protected boolean isInit = false;
+
 	/** 
-	 * Constructor
+	 * Init for spring init-method
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
 	 */
-	public FastdfsFileServiceImpl() {
+	public void init() {
+		if(isInit){
+			return;
+		}
 		try {
-			ClientGlobal.init("/"+confPath);
+			ClientGlobal.init("/" + confPath);
 		} catch (FileNotFoundException e) {
 			log.error("can't find config file[" + confPath + "]");
 		} catch (IOException e) {
@@ -66,8 +81,21 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 		} catch (FastdfsException e) {
 			log.error("fastdfs init config failed!");
 		}
+		if(docRoot==null){
+			docRoot = ClientGlobal.iniReader.getStrValue("docRoot");
+			if(docRoot==null){
+				docRoot=getClass().getResource("/").getPath();
+				docRoot=docRoot.substring(0, docRoot.lastIndexOf("/"));
+				docRoot=docRoot.substring(0, docRoot.lastIndexOf("/"));
+				docRoot+="/DocRoot";
+			}
+		}
+		if(!docRoot.endsWith("/")){
+			docRoot+="/";
+		}
+		isInit=true;
 	}
-	
+
 	/**
 	 * 创建连接
 	 * 
@@ -81,24 +109,24 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 			trackerServer = trackerClient.getConnection();
 		} catch (IOException e) {
 			log.error(e.getMessage());
-			throw new FileServiceException("connect file service error："+e.getMessage());
+			throw new FileServiceException("connect file service error：" + e.getMessage());
 		}
 		StorageClient storageClient = new StorageClient(trackerServer, null);
 		return storageClient;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param path
 	 * @return
 	 */
 	@Override
 	public int deleteFile(String path) {
+		init();
 		try {
-			return createStoreClient().delete_file(getGroup(path),
-					getFileName(path));
+			return createStoreClient().delete_file(getGroup(path), getFileName(path));
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			throw new FileServiceException(e);
@@ -107,27 +135,27 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param path
 	 * @return
 	 */
 	@Override
 	public FileInfos getFileInfo(String path) {
-		if(path==null||path.length()==0){
+		init();
+		if (path == null || path.length() == 0) {
 			return null;
 		}
 		FileInfos file = new FileInfos();
 		try {
 			StorageClient stc = createStoreClient();
 			FileInfo fi = stc.get_file_info(getGroup(path), getFileName(path));
-			if(fi==null){
+			if (fi == null) {
 				return null;
 			}
 			file.setCreateTime(fi.getCreateTimestamp());
 			file.setFileSize(fi.getFileSize());
-			NameValuePair[] nv = stc.get_metadata(getGroup(path),
-					getFileName(path));
+			NameValuePair[] nv = stc.get_metadata(getGroup(path), getFileName(path));
 			Map<String, String> meta = new HashMap<String, String>();
 			for (NameValuePair n : nv) {
 				if (FileInfos.KEY_FILENAME.equals(n.getName())) {
@@ -137,12 +165,12 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 				}
 			}
 			file.setPath(path);
-			String pre=ClientGlobal.iniReader.getStrValue("httpURI."+fi.getSourceIpAddr());
-			if(!pre.endsWith("/")){
-				pre=pre+"/";
+			String pre = ClientGlobal.iniReader.getStrValue("httpURI." + fi.getSourceIpAddr());
+			if (!pre.endsWith("/")) {
+				pre = pre + "/";
 			}
-			file.setHttpUrl(pre+getFileName(path));
-			
+			file.setHttpUrl(pre + getFileName(path));
+
 			file.setMeta(meta);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -152,17 +180,18 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param path
 	 * @param os
 	 */
 	@Override
 	public void outputFile(String path, OutputStream os) {
-		if(os==null){
+		init();
+		if (os == null) {
 			throw new FileServiceException("OutputStream is null");
 		}
-		DownloadStream callback=new DownloadStream(os);
+		DownloadStream callback = new DownloadStream(os);
 		try {
 			createStoreClient().download_file(getGroup(path), getFileName(path), callback);
 		} catch (IOException e) {
@@ -175,21 +204,21 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param is
 	 * @param fileName
 	 * @param meta
 	 * @return
 	 */
 	@Override
-	public String upload(InputStream is, String fileName,
-			Map<String, String> meta) {
+	public String upload(InputStream is, String fileName, Map<String, String> meta) {
+		init();
 		if (null == meta) {
 			meta = new HashMap<String, String>();
 		}
-		if (fileName == null||fileName.length()==0) {
-			fileName="Unkown";
+		if (fileName == null || fileName.length() == 0) {
+			fileName = "Unkown";
 		}
 		String file_ext_name = "";
 		if (fileName.contains(".")) {
@@ -205,9 +234,24 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 		}
 
 		try {
-			UploadCallback callback=new Upload(is);
-			String[] re = createStoreClient().upload_file(null, 100L, callback, file_ext_name, meta_list);
-			return (re[0]+"/"+re[1]);
+			long filesize;
+			UploadCallback callback;
+			String[] re;
+			if (is instanceof FileInputStream) {
+				filesize = is.available();
+				callback = new UploadStream(is, filesize);
+				re = createStoreClient().upload_file(null, filesize, callback, file_ext_name, meta_list);
+			} else {
+				File temp = new File(docRoot + fileNameGenerate.generate(fileName));
+				FileOutputStream fos = new FileOutputStream(temp);
+				output(is, fos);
+				FileInputStream fis = new FileInputStream(temp);
+				filesize=fis.available();
+				callback = new UploadStream(fis, filesize);
+				re = createStoreClient().upload_file(null, filesize, callback, file_ext_name, meta_list);
+				temp.delete();
+			}
+			return (re[0] + "/" + re[1]);
 		} catch (Exception e) {
 			e.printStackTrace();
 			log.error(e.getMessage());
@@ -217,28 +261,103 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl{
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param path
 	 * @param is
 	 */
 	@Override
 	public void append(String path, InputStream is) {
-		// TODO Auto-generated method stub
+		init();
+		try {
+			long filesize = 0;
+			UploadCallback callback;
+			if (is instanceof FileInputStream) {
+				filesize = is.available();
+				callback = new UploadStream(is, filesize);
+				createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+			} else {
+				File temp = new File(docRoot + getFileName(path));
+				FileOutputStream fos = new FileOutputStream(temp);
+				output(is, fos);
+				FileInputStream fis = new FileInputStream(temp);
+				filesize=fis.available();
+				callback = new UploadStream(fis, filesize);
+				createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+				temp.delete();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
+	}
 
+	private void output(InputStream is, OutputStream os) {
+		if (is == null || os == null) {
+			return;
+		}
+		int len = 0;
+		byte[] b = new byte[4096];
+		try {
+			while ((len = is.read(b)) != -1) {
+				os.write(b, 0, len);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			if (os != null) {
+				try {
+					os.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	/**
 	 * {@inheritDoc}
-	 *
-	 * @author  covito
+	 * 
+	 * @author covito
 	 * @param path
 	 * @param meta
 	 */
 	@Override
 	public void updataMeta(String path, Map<String, String> meta) {
-		// TODO Auto-generated method stub
-
+		init();
+		if (null == meta) {
+			meta = new HashMap<String, String>();
+		}
+		NameValuePair[] meta_list = new NameValuePair[meta.size()];
+		int i = 0;
+		for (String key : meta.keySet()) {
+			meta_list[i] = new NameValuePair(key, meta.get(key));
+			i++;
+		}
+		try {
+			createStoreClient().set_metadata(getGroup(path), getFileName(path), meta_list, ProtoCommon.STORAGE_SET_METADATA_FLAG_MERGE);
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.error(e.getMessage());
+		}
 	}
+
+	/**
+	 * Set docRoot
+	 *
+	 * @param docRoot the docRoot to set
+	 */
+	public void setDocRoot(String docRoot) {
+		this.docRoot = docRoot;
+	}
+	
+	
 
 }
