@@ -55,8 +55,6 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 	
 	protected static final String metaEndFlag="-meta.json";
 	
-	protected static final String CREAT_ETIME="CreateTime";
-	
 	protected boolean isInit=false;
 	
 	
@@ -75,7 +73,7 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 			config=ResourceReader.getAll(confPath);
 		} catch (Exception e) {
 			config=new HashMap<String, String>();
-			log.error(confPath+" can't find!");
+			log.warn(confPath+" can't find!");
 		}
 		if(docRoot==null){
 			if(config.containsKey("doc_root")){
@@ -168,7 +166,7 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 		Map<String,String> meta=JSON.parseObject(json.toString(), Map.class);
 		file.setMeta(meta);
 		file.setFileName(meta.get(FileInfos.KEY_FILENAME));
-		file.setCreateTime(new Date(Long.parseLong(meta.get(CREAT_ETIME))));
+		file.setCreateTime(new Date(f.lastModified()));
 		file.setFileSize(f.length());
 		return file;
 	}
@@ -218,7 +216,6 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 			fileName="Unkown";
 		}
 		meta.put(FileInfos.KEY_FILENAME, fileName);
-		meta.put(CREAT_ETIME, new Date().getTime()+"");
 		String path=generatePath(fileName);
 		File f=new File(getFilePath(path));
 		try {

@@ -67,6 +67,7 @@ public class ResourceReader {
 		InputStream is = getClass().getResourceAsStream(name);
 		if(is==null){
 			log.error("can't find file ["+name+"]");
+			return;
 		}
 		try {
 			config.load(is);

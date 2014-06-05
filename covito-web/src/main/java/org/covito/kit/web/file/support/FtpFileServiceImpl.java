@@ -17,20 +17,17 @@
 package org.covito.kit.web.file.support;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.SocketException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.covito.kit.utility.FileUtil;
 import org.covito.kit.utility.ResourceReader;
 import org.covito.kit.web.file.FileInfos;
 import org.covito.kit.web.file.FileServiceException;
@@ -38,6 +35,7 @@ import org.covito.kit.web.file.common.AbstractFileServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 /**
@@ -57,8 +55,6 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 
 	protected static final String metaEndFlag = "-meta.json";
 
-	protected static final String CREAT_ETIME = "CreateTime";
-
 	protected String url;
 
 	protected String username;
@@ -72,6 +68,8 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 	protected boolean isInit = false;
 	
 	protected FTPClient ftp;
+	
+	protected String rootWorkingDirectory="/";
 
 	/**
 	 * 获得连接
@@ -84,12 +82,28 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 	 */
 	protected FTPClient getConnect() {
 		if(ftp!=null){
+			if(!ftp.isConnected()){
+				try {
+					ftp.connect(url, port);
+					ftp.login(username, password);
+				} catch (Exception e) {
+					e.printStackTrace();
+					ftp=null;
+					throw new FileServiceException("FTP 服务器登录失败");
+				}
+			}
 			return ftp;
 		}
 		initFTPClient();
 		return ftp;
 	}
 	
+	/** 
+	 * 初始化FTP Client
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 */
 	protected void initFTPClient(){
 		ftp = new FTPClient();
 		ftp.setControlEncoding("UTF-8");
@@ -102,6 +116,8 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 			int reply = ftp.getReplyCode();
 			if (!FTPReply.isPositiveCompletion(reply)) {
 				ftp.disconnect();
+				ftp=null;
+				throw new FileServiceException("FTP 服务器登录失败");
 			}
 			ftp.setFileType(FTPClient.BINARY_FILE_TYPE);
 		} catch (Exception e) {
@@ -148,22 +164,61 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 			username = ResourceReader.getValue(confPath, "username","root");
 			password = ResourceReader.getValue(confPath, "password","root");
 			isPassiveMode = Boolean.parseBoolean(ResourceReader.getValue(confPath, "isPassiveMode","true"));
+			rootWorkingDirectory = ResourceReader.getValue(confPath, "rootWorkingDirectory","/");
 		} catch (Exception e) {
+			e.printStackTrace();
 			log.error(confPath+" can't find!");
 		}
+		
 		isInit=true;
 	}
 	
 	protected String getMetaPath(String path){
 		StringBuffer sb=new StringBuffer();
-		sb.append(path.substring(0, path.indexOf(".")));
+		sb.append(path.substring(path.indexOf(separate)+1, path.indexOf(".")));
 		sb.append(metaEndFlag);
 		return sb.toString();
 	}
 	
+	/** 
+	 * 切换到批定目录
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @param ftp
+	 * @param path
+	 * @param mkdir 为true时，当目录不存在时新建目录
+	 * @return
+	 */
+	protected boolean dealDocPath(FTPClient ftp,String path,boolean mkdir){
+		String doc=path.substring(0, path.indexOf("/"));
+		try {
+			boolean success=ftp.changeWorkingDirectory(rootWorkingDirectory+"/"+doc);
+			if(!success){
+				if(mkdir){
+					ftp.mkd(rootWorkingDirectory+"/"+doc);
+					return ftp.changeWorkingDirectory(rootWorkingDirectory+"/"+doc);
+				}
+				return false;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	/** 
+	 * 获取path
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @param path
+	 * @return
+	 */
 	protected String getFilePath(String path){
 		StringBuffer sb=new StringBuffer();
-		sb.append(path);
+		sb.append(path.substring(path.indexOf(separate)+1,path.length()));
 		return sb.toString();
 	}
 
@@ -179,7 +234,17 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		init();
 		try {
 			FTPClient client=getConnect();
-			client.deleteFile(path);
+			if(!dealDocPath(client, path,false)){
+				return 0;
+			}
+			boolean sucess=client.deleteFile(getFilePath(path));
+			if(!sucess){
+				log.warn(client.getReplyString());
+			}
+			sucess=client.deleteFile(getMetaPath(path));
+			if(!sucess){
+				log.warn(client.getReplyString());
+			}
 			return 0;
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -201,11 +266,36 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 			return null;
 		}
 		FileInfos file = new FileInfos();
-		try {
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		FTPClient client=getConnect();
+		if(!dealDocPath(client, path,false)){
+			throw new FileServiceException("path not exist!");
 		}
+		
+		ByteArrayOutputStream bos=new ByteArrayOutputStream();
+		try {
+			boolean sucess=client.retrieveFile(getMetaPath(path), bos);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException("path is not exist!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new FileServiceException("path is not exist!");
+		}
+		JSONObject json = JSON.parseObject(bos.toString());
+		
+		Map<String,String> meta=JSON.parseObject(json.toString(), Map.class);
+		file.setMeta(meta);
+		file.setFileName(meta.get(FileInfos.KEY_FILENAME));
+		
+		try {
+			FTPFile ftpfile=client.mlistFile(rootWorkingDirectory+"/"+path);
+			file.setCreateTime(new Date(ftpfile.getTimestamp().getTimeInMillis()));
+			file.setFileSize(ftpfile.getSize());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
 		return file;
 	}
 
@@ -224,7 +314,14 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		}
 		FTPClient client=getConnect();
 		try {
-			client.retrieveFile(path, os);
+			if(!dealDocPath(client, path,false)){
+				throw new FileServiceException("path not exist!");
+			}
+			boolean sucess=client.retrieveFile(getFilePath(path), os);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -251,13 +348,19 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		}
 		
 		meta.put(FileInfos.KEY_FILENAME, fileName);
-		meta.put(CREAT_ETIME, new Date().getTime()+"");
 		String path=generatePath(fileName);
 			
 		FTPClient client=getConnect();
 		
 		try {
-			client.storeFile(getFilePath(path), is);
+			if(!dealDocPath(client, path,true)){
+				throw new FileServiceException(client.getReplyString());
+			}
+			boolean sucess=client.storeFile(getFilePath(path), is);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -268,7 +371,11 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		
 		ByteArrayInputStream bis=new ByteArrayInputStream(josn.toString().getBytes());
 		try {
-			client.storeFile(getMetaPath(path), bis);
+			boolean sucess=client.storeFile(getMetaPath(path), bis);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -290,7 +397,14 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		}
 		FTPClient client=getConnect();
 		try {
-			client.appendFile(getFilePath(path), is);
+			if(!dealDocPath(client, path,false)){
+				throw new FileServiceException("path not exist!");
+			}
+			boolean sucess=client.appendFile(getFilePath(path), is);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -306,7 +420,33 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 	@Override
 	public void updataMeta(String path, Map<String, String> meta) {
 		init();
-		
+		FTPClient client=getConnect();
+		if(!dealDocPath(client, path,false)){
+			throw new FileServiceException("path not exist!");
+		}
+		ByteArrayOutputStream bos=new ByteArrayOutputStream();
+		try {
+			boolean sucess=client.retrieveFile(getMetaPath(path), bos);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			throw new FileServiceException("path not exist!");
+		}
+		JSONObject json=JSON.parseObject(bos.toString());
+		json.putAll(meta);
+		ByteArrayInputStream bis=new ByteArrayInputStream(json.toString().getBytes());
+		try {
+			boolean sucess=client.storeFile(getMetaPath(path), bis);
+			if(!sucess){
+				log.error(client.getReplyString());
+				throw new FileServiceException(client.getReplyString());
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -369,4 +509,14 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		this.isPassiveMode = isPassiveMode;
 	}
 
+	/**
+	 * Set rootWorkingDirectory
+	 *
+	 * @param rootWorkingDirectory the rootWorkingDirectory to set
+	 */
+	public void setRootWorkingDirectory(String rootWorkingDirectory) {
+		this.rootWorkingDirectory = rootWorkingDirectory;
+	}
+
+	
 }
