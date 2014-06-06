@@ -366,7 +366,14 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 	public void setTempRoot(String tempRoot) {
 		this.tempRoot = tempRoot;
 	}
-	
-	
+
+	/**
+	 * Set confPath
+	 *
+	 * @param confPath the confPath to set
+	 */
+	public void setConfPath(String confPath) {
+		this.confPath = confPath;
+	}
 
 }
