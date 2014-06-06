@@ -58,7 +58,7 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 
-	protected String docRoot;
+	protected String tempRoot;
 	
 	protected boolean isInit = false;
 
@@ -81,17 +81,17 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 		} catch (FastdfsException e) {
 			log.error("fastdfs init config failed!");
 		}
-		if(docRoot==null){
-			docRoot = ClientGlobal.iniReader.getStrValue("docRoot");
-			if(docRoot==null){
-				docRoot=getClass().getResource("/").getPath();
-				docRoot=docRoot.substring(0, docRoot.lastIndexOf("/"));
-				docRoot=docRoot.substring(0, docRoot.lastIndexOf("/"));
-				docRoot+="/DocRoot";
+		if(tempRoot==null){
+			tempRoot = ClientGlobal.iniReader.getStrValue("docRoot");
+			if(tempRoot==null){
+				tempRoot=getClass().getResource("/").getPath();
+				tempRoot=tempRoot.substring(0, tempRoot.lastIndexOf("/"));
+				tempRoot=tempRoot.substring(0, tempRoot.lastIndexOf("/"));
+				tempRoot+="/TempRoot";
 			}
 		}
-		if(!docRoot.endsWith("/")){
-			docRoot+="/";
+		if(!tempRoot.endsWith("/")){
+			tempRoot+="/";
 		}
 		isInit=true;
 	}
@@ -238,17 +238,19 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 			UploadCallback callback;
 			String[] re;
 			if (is instanceof FileInputStream) {
-				filesize = is.available();
+				filesize = ((FileInputStream)is).getChannel().size();
 				callback = new UploadStream(is, filesize);
-				re = createStoreClient().upload_file(null, filesize, callback, file_ext_name, meta_list);
+				re = createStoreClient().upload_appender_file(null, filesize, callback, file_ext_name, meta_list);
+				is.close();
 			} else {
-				File temp = new File(docRoot + fileNameGenerate.generate(fileName));
+				File temp = new File(tempRoot + fileNameGenerate.generate(fileName));
 				FileOutputStream fos = new FileOutputStream(temp);
 				output(is, fos);
 				FileInputStream fis = new FileInputStream(temp);
-				filesize=fis.available();
+				filesize=fis.getChannel().size();
 				callback = new UploadStream(fis, filesize);
-				re = createStoreClient().upload_file(null, filesize, callback, file_ext_name, meta_list);
+				re = createStoreClient().upload_appender_file(null, filesize, callback, file_ext_name, meta_list);
+				fis.close();
 				temp.delete();
 			}
 			return (re[0] + "/" + re[1]);
@@ -272,19 +274,26 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 		try {
 			long filesize = 0;
 			UploadCallback callback;
+			int result=0;
 			if (is instanceof FileInputStream) {
-				filesize = is.available();
+				filesize = ((FileInputStream)is).getChannel().size();
 				callback = new UploadStream(is, filesize);
-				createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+				result=createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+				is.close();
+				
 			} else {
-				File temp = new File(docRoot + getFileName(path));
+				File temp = new File(tempRoot + getFileName(path));
 				FileOutputStream fos = new FileOutputStream(temp);
 				output(is, fos);
 				FileInputStream fis = new FileInputStream(temp);
-				filesize=fis.available();
+				filesize=fis.getChannel().size();
 				callback = new UploadStream(fis, filesize);
-				createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+				result=createStoreClient().append_file(getGroup(path), getFileName(path), filesize, callback);
+				fis.close();
 				temp.delete();
+			}
+			if(result!=0){
+				throw new FileServiceException("file is not allow append!");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -350,12 +359,12 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 	}
 
 	/**
-	 * Set docRoot
+	 * Set tempRoot
 	 *
-	 * @param docRoot the docRoot to set
+	 * @param tempRoot the tempRoot to set
 	 */
-	public void setDocRoot(String docRoot) {
-		this.docRoot = docRoot;
+	public void setTempRoot(String tempRoot) {
+		this.tempRoot = tempRoot;
 	}
 	
 	
