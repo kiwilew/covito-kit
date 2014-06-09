@@ -14,48 +14,24 @@
  * under the License.
  *
  */
-package org.covito.kit.exception;
+package org.covito.kit.cache;
 
+import org.springframework.cache.CacheManager;
 
 /**
- * 一句话功能简述
+ * 缓存管理者
  * <p>
  * 功能详细描述
  * </p>
  * 
  * @author covito
- * @version [v1.0, 2014-6-4]
+ * @version [v1.0, 2014-6-9]
  */
-public class FileNotFoundException extends FrameworkException {
+public interface ICacheManager extends CacheManager {
 
-	/**
-	 * serialVersionUID
-	 */
-	private static final long serialVersionUID = -687146617137065790L;
+	boolean isSupportQueryCache();
 
-	/**
-	 * Constructor
-	 * 
-	 * @param message
-	 */
-	public FileNotFoundException(String message) {
-		super(message);
-	}
+	boolean isRemoveAllEntries();
 
-	/** 
-	 * Constructor
-	 * @param t
-	 */
-	public FileNotFoundException(Throwable t) {
-		super(t);
-	}
-
-	/** 
-	 * Constructor
-	 * @param message
-	 * @param cause
-	 */
-	public FileNotFoundException(String message, Throwable cause) {
-		super(message, cause);
-	}
+	String getRelCacheName();
 }
