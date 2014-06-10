@@ -3,7 +3,7 @@ package org.covito.kit.file;
 import java.util.Date;
 import java.util.Map;
 
-public class FileInfos{
+public class FileMeta{
 
 	public static String KEY_FILENAME="KEY_FileName";
 	

@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.covito.kit.file.FileInfos;
+import org.covito.kit.file.FileMeta;
 import org.covito.kit.file.FileService;
 import org.covito.kit.file.FileServiceUtil;
 import org.slf4j.Logger;
@@ -70,7 +70,16 @@ public class FileDownLoadServlet extends HttpServlet {
 			noFileError(response, path);
 			return;
 		}
-		this.outputFile(response, path);
+		if (fileService == null) {
+			fileService = FileServiceUtil.getFileService();
+		}
+		try {
+			this.outputFile(response, path);
+		} catch (Exception e) {
+			logger.error(e.getLocalizedMessage());
+			noFileError(response, path);
+			return;
+		}
 	}
 
 	/**
@@ -85,11 +94,7 @@ public class FileDownLoadServlet extends HttpServlet {
 	 * @throws IOException
 	 */
 	protected void outputFile(HttpServletResponse response, String path) throws IOException {
-		ServletOutputStream os = response.getOutputStream();
-		if (fileService == null) {
-			fileService = FileServiceUtil.getFileService();
-		}
-		FileInfos info = fileService.getFileInfo(path);
+		FileMeta info = fileService.getFileInfo(path);
 		String fileName=info.getFileName();
 		Long size = info.getFileSize();
 		response.setContentLength(size.intValue());
@@ -105,6 +110,7 @@ public class FileDownLoadServlet extends HttpServlet {
 		if(index!=-1){
 			response.setContentType(contentType[index]);
 		}
+		ServletOutputStream os = response.getOutputStream();
 		fileService.outputFile(path, os);
 	}
 
@@ -124,7 +130,7 @@ public class FileDownLoadServlet extends HttpServlet {
 			response.setContentType("text/html");
 			writer = response.getWriter();
 			writer.println("<html>");
-			writer.println("<br><br>Could not get file id " + fileName);
+			writer.println("<br><br>Could not get file path: " + fileName);
 			writer.println("<br><br>");
 			writer.println("</html>");
 		} catch (Exception e) {

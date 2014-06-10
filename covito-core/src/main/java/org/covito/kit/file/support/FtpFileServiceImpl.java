@@ -28,7 +28,7 @@ import java.util.Map;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.covito.kit.file.FileInfos;
+import org.covito.kit.file.FileMeta;
 import org.covito.kit.file.FileServiceException;
 import org.covito.kit.file.common.AbstractFileServiceImpl;
 import org.covito.kit.utility.ResourceReader;
@@ -260,12 +260,12 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 	 * @return
 	 */
 	@Override
-	public FileInfos getFileInfo(String path) {
+	public FileMeta getFileInfo(String path) {
 		init();
 		if (path == null || path.length() == 0) {
 			return null;
 		}
-		FileInfos file = new FileInfos();
+		FileMeta file = new FileMeta();
 		FTPClient client=getConnect();
 		if(!dealDocPath(client, path,false)){
 			throw new FileServiceException("path not exist!");
@@ -286,7 +286,7 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 		
 		Map<String,String> meta=JSON.parseObject(json.toString(), Map.class);
 		file.setMeta(meta);
-		file.setFileName(meta.get(FileInfos.KEY_FILENAME));
+		file.setFileName(meta.get(FileMeta.KEY_FILENAME));
 		
 		try {
 			FTPFile ftpfile=client.mlistFile(rootWorkingDirectory+"/"+path);
@@ -347,7 +347,7 @@ public class FtpFileServiceImpl extends AbstractFileServiceImpl {
 			fileName = "Unkown";
 		}
 		
-		meta.put(FileInfos.KEY_FILENAME, fileName);
+		meta.put(FileMeta.KEY_FILENAME, fileName);
 		String path=generatePath(fileName);
 			
 		FTPClient client=getConnect();

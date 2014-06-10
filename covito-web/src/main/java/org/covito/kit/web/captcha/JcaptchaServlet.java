@@ -15,7 +15,6 @@ import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.jeecms.common.web.session.SessionProvider;
 import com.octo.captcha.service.CaptchaServiceException;
 import com.octo.captcha.service.image.ImageCaptchaService;
 
@@ -27,7 +26,7 @@ public class JcaptchaServlet extends HttpServlet {
 	public static final String CAPTCHA_IMAGE_FORMAT = "jpeg";
 
 	private ImageCaptchaService captchaService;
-	private SessionProvider session;
+//	private SessionProvider session;
 
 	@Override
 	public void init() throws ServletException {
@@ -35,8 +34,8 @@ public class JcaptchaServlet extends HttpServlet {
 				.getWebApplicationContext(getServletContext());
 		captchaService = (ImageCaptchaService) BeanFactoryUtils
 				.beanOfTypeIncludingAncestors(appCtx, ImageCaptchaService.class);
-		session = (SessionProvider) BeanFactoryUtils
-				.beanOfTypeIncludingAncestors(appCtx, SessionProvider.class);
+//		session = (SessionProvider) BeanFactoryUtils
+//				.beanOfTypeIncludingAncestors(appCtx, SessionProvider.class);
 	}
 
 	@Override
@@ -50,11 +49,11 @@ public class JcaptchaServlet extends HttpServlet {
 			// the same id must be used to validate the response, the session id
 			// is a good candidate!
 
-			String captchaId = session.getSessionId(request, response);
-			BufferedImage challenge = captchaService.getImageChallengeForID(
-					captchaId, request.getLocale());
+//			String captchaId = session.getSessionId(request, response);
+//			BufferedImage challenge = captchaService.getImageChallengeForID(
+//					captchaId, request.getLocale());
 			// Jimi.putImage("image/jpeg", challenge, jpegOutputStream);
-			ImageIO.write(challenge, CAPTCHA_IMAGE_FORMAT, jpegOutputStream);
+			//ImageIO.write(challenge, CAPTCHA_IMAGE_FORMAT, jpegOutputStream);
 		} catch (IllegalArgumentException e) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;

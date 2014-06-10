@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.covito.kit.file.FileInfos;
+import org.covito.kit.file.FileMeta;
 import org.covito.kit.file.FileServiceException;
 import org.covito.kit.file.common.AbstractFileServiceImpl;
 import org.covito.kit.utility.FileUtil;
@@ -144,12 +144,12 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 	 * @return
 	 */
 	@Override
-	public FileInfos getFileInfo(String path) {
+	public FileMeta getFileInfo(String path) {
 		init();
 		if(path==null||path.length()==0){
 			return null;
 		}
-		FileInfos file = new FileInfos();
+		FileMeta file = new FileMeta();
 		
 		File f=new File(getFilePath(path));
 		if(!f.exists()){
@@ -165,7 +165,7 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 		
 		Map<String,String> meta=JSON.parseObject(json.toString(), Map.class);
 		file.setMeta(meta);
-		file.setFileName(meta.get(FileInfos.KEY_FILENAME));
+		file.setFileName(meta.get(FileMeta.KEY_FILENAME));
 		file.setCreateTime(new Date(f.lastModified()));
 		file.setFileSize(f.length());
 		return file;
@@ -215,7 +215,7 @@ public class LocalFileServiceImpl extends AbstractFileServiceImpl {
 		if (fileName == null||fileName.length()==0) {
 			fileName="Unkown";
 		}
-		meta.put(FileInfos.KEY_FILENAME, fileName);
+		meta.put(FileMeta.KEY_FILENAME, fileName);
 		String path=generatePath(fileName);
 		File f=new File(getFilePath(path));
 		try {

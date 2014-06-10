@@ -26,7 +26,7 @@ public interface FileService {
 	 * @param path 服务器路径
 	 * @return 文件信息对象
 	 */
-	FileInfos getFileInfo(String path);
+	FileMeta getFileInfo(String path);
 	
 	/**
 	 * 将文件输出到输出流

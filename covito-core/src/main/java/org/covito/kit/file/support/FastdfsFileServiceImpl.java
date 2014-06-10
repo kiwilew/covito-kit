@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.covito.kit.file.FileInfos;
+import org.covito.kit.file.FileMeta;
 import org.covito.kit.file.FileServiceException;
 import org.covito.kit.file.common.AbstractFileServiceImpl;
 import org.covito.kit.file.fastdfs.ClientGlobal;
@@ -141,12 +141,12 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 	 * @return
 	 */
 	@Override
-	public FileInfos getFileInfo(String path) {
+	public FileMeta getFileInfo(String path) {
 		init();
 		if (path == null || path.length() == 0) {
 			return null;
 		}
-		FileInfos file = new FileInfos();
+		FileMeta file = new FileMeta();
 		try {
 			StorageClient stc = createStoreClient();
 			FileInfo fi = stc.get_file_info(getGroup(path), getFileName(path));
@@ -158,7 +158,7 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 			NameValuePair[] nv = stc.get_metadata(getGroup(path), getFileName(path));
 			Map<String, String> meta = new HashMap<String, String>();
 			for (NameValuePair n : nv) {
-				if (FileInfos.KEY_FILENAME.equals(n.getName())) {
+				if (FileMeta.KEY_FILENAME.equals(n.getName())) {
 					file.setFileName(n.getValue());
 				} else {
 					meta.put(n.getName(), n.getValue());
@@ -224,7 +224,7 @@ public class FastdfsFileServiceImpl extends AbstractFileServiceImpl {
 		if (fileName.contains(".")) {
 			file_ext_name = fileName.substring(fileName.lastIndexOf(".") + 1);
 		}
-		meta.put(FileInfos.KEY_FILENAME, fileName);
+		meta.put(FileMeta.KEY_FILENAME, fileName);
 		NameValuePair[] meta_list = new NameValuePair[meta.size()];
 
 		int i = 0;
