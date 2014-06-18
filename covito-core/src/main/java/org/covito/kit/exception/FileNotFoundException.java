@@ -16,6 +16,8 @@
  */
 package org.covito.kit.exception;
 
+import org.covito.kit.FrameworkException;
+
 
 /**
  * 一句话功能简述

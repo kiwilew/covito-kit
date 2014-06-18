@@ -16,6 +16,8 @@
  */
 package org.covito.kit.cache;
 
+import org.covito.kit.cache.common.CacheNameItem;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
 /**
@@ -29,9 +31,46 @@ import org.springframework.cache.CacheManager;
  */
 public interface ICacheManager extends CacheManager {
 
+	/** 
+	 * 是否支持缓存查询
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @return
+	 */
 	boolean isSupportQueryCache();
 
-	boolean isRemoveAllEntries();
+	
+	/** 
+	 * 设置缓存关联关系
+	 * <p>当relCache被删除时，级联删此缓存</p>
+	 *
+	 * @author  covito
+	 * @param cacheName
+	 * @param key
+	 * @param relCache
+	 */
+	void setCacheRel(String cacheName,String key,CacheNameItem item);
 
-	String getRelCacheName();
+
+	/** 
+	 * 获取关联缓存
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @return
+	 */
+	Cache getRelCache();
+
+
+	/** 
+	 * 生成关联缓存Key
+	 * <p>功能详细描述</p>
+	 *
+	 * @author  covito
+	 * @param cacheName
+	 * @param key
+	 * @return
+	 */
+	String generateRelCacheKey(String cacheName, Object key);
 }

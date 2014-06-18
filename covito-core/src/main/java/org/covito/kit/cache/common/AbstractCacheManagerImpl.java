@@ -16,7 +16,12 @@
  */
 package org.covito.kit.cache.common;
 
+import org.covito.kit.cache.CacheException;
 import org.covito.kit.cache.ICacheManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
+import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.support.AbstractCacheManager;
 
 /**
@@ -31,11 +36,17 @@ import org.springframework.cache.support.AbstractCacheManager;
 public abstract class AbstractCacheManagerImpl extends AbstractCacheManager implements
 		ICacheManager {
 
-	protected boolean supportQueryCache;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
+	/**
+	 * 是否支持查询缓存
+	 */
+	protected boolean supportQueryCache=true;
 
-	protected boolean removeAllEntries;
-
-	protected String relCacheName = "COVITO_CACHE";
+	/**
+	 * 缓存关联关系维护缓存
+	 */
+	protected String relCacheName = "SYS_REL_CACHE";
 
 	/**
 	 * {@inheritDoc}
@@ -49,17 +60,6 @@ public abstract class AbstractCacheManagerImpl extends AbstractCacheManager impl
 	}
 
 	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @return
-	 */
-	@Override
-	public boolean isRemoveAllEntries() {
-		return removeAllEntries;
-	}
-
-	/**
 	 * Set supportQueryCache
 	 * 
 	 * @param supportQueryCache
@@ -70,27 +70,6 @@ public abstract class AbstractCacheManagerImpl extends AbstractCacheManager impl
 	}
 
 	/**
-	 * Set removeAllEntries
-	 * 
-	 * @param removeAllEntries
-	 *            the removeAllEntries to set
-	 */
-	public void setRemoveAllEntries(boolean removeAllEntries) {
-		this.removeAllEntries = removeAllEntries;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @return
-	 */
-	@Override
-	public String getRelCacheName() {
-		return relCacheName;
-	}
-
-	/**
 	 * Set relCacheName
 	 * 
 	 * @param relCacheName
@@ -98,6 +77,65 @@ public abstract class AbstractCacheManagerImpl extends AbstractCacheManager impl
 	 */
 	public void setRelCacheName(String relCacheName) {
 		this.relCacheName = relCacheName;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @author covito
+	 * @param cacheName
+	 * @param key
+	 * @param relCache
+	 */
+	@Override
+	public void setCacheRel(String cacheName, String key, CacheNameItem item) {
+		Cache cache = getRelCache();
+		if (cache == null) {
+			logger.error("relCache [name:{}] is not exist!",relCacheName);
+			throw new CacheException("relCache [name:"+relCacheName+"] is not exist!");
+		}
+		if (!isSupportQueryCache()) {
+			return;
+		}
+		String str = generateRelCacheKey(item.getCacheName(), item.getKey());
+		ValueWrapper svw = cache.get(str);
+		KeyListRel rel = null;
+		if (svw == null) {
+			rel = new KeyListRel(item.getKey());
+		} else {
+			rel = (KeyListRel) svw.get();
+		}
+		if (rel.addRelObject(cacheName, key)) {
+			if (this.logger.isDebugEnabled()) {
+				this.logger.debug("put into rel cache {} by key {}, value {}", new Object[] {
+						str, str, svw });
+			}
+			cache.put(str, rel);
+		}
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @author  covito
+	 * @param cacheName
+	 * @param key
+	 * @return
+	 */
+	@Override
+	public String generateRelCacheKey(String cacheName,Object key){
+		return cacheName+"_"+key;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @author  covito
+	 * @return
+	 */
+	@Override
+	public Cache getRelCache() {
+		return getCache(relCacheName);
 	}
 
 }

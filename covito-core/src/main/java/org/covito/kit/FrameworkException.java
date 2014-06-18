@@ -1,4 +1,4 @@
-package org.covito.kit.exception;
+package org.covito.kit;
 
 /**
  * 一句话功能简述<br/>

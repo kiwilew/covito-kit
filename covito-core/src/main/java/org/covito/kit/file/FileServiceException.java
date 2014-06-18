@@ -1,6 +1,6 @@
 package org.covito.kit.file;
 
-import org.covito.kit.exception.FrameworkException;
+import org.covito.kit.FrameworkException;
 
 public class FileServiceException extends FrameworkException{
 
