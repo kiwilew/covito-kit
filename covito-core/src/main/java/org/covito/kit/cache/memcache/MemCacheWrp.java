@@ -17,8 +17,11 @@
 package org.covito.kit.cache.memcache;
 
 import java.util.Date;
+import java.util.List;
 
-import org.covito.kit.cache.common.AbstractCacheImpl;
+import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.common.AbsCacheImpl;
+import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.support.SimpleValueWrapper;
@@ -34,10 +37,11 @@ import com.whalin.MemCached.MemCachedClient;
  * @author covito
  * @version [v1.0, 2014年6月18日]
  */
-public class MemCacheWrp extends AbstractCacheImpl {
+public class MemCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	
 	private String name;
 	private MemCachedClient memcachedClient;
 	private int expiredDuration = 2592000;
@@ -48,13 +52,6 @@ public class MemCacheWrp extends AbstractCacheImpl {
 	public MemCacheWrp() {
 	}
 	
-	/**
-	 * Constructor
-	 */
-	public MemCacheWrp(MemCacheManager manager) {
-		this.cacheManager =manager;
-	}
-
 	/**
 	 * {@inheritDoc}
 	 * 
@@ -96,13 +93,14 @@ public class MemCacheWrp extends AbstractCacheImpl {
 	 * @param key
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
-	public ValueWrapper get(Object key) {
+	public V get(K key) {
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("Get cache by name {}, key {}", getName(), key);
 		}
 		Object value = this.memcachedClient.get(generateKey(key));
-		return ((value != null) ? new SimpleValueWrapper(fromStoreValue(value)) : null);
+		return (V)fromStoreValue(value);
 	}
 
 	/**
@@ -113,14 +111,13 @@ public class MemCacheWrp extends AbstractCacheImpl {
 	 * @param value
 	 */
 	@Override
-	public void put(Object key, Object value) {
+	public void put(K key, V value) {
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("put into cache {} by key {}, value {}", new Object[] { getName(),
 					key, value });
 		}
 //		this.memcachedClient.add(generateKey(key), toStoreValue(value), new Date(new Date().getTime()+this.expiredDuration));
 		this.memcachedClient.add(generateKey(key), toStoreValue(value));
-		putObject(key, value);
 	}
 
 	/**
@@ -130,11 +127,11 @@ public class MemCacheWrp extends AbstractCacheImpl {
 	 * @param key
 	 */
 	@Override
-	public void evict(Object key) {
+	public void evict(K key) {
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("Evict from cache {} by key {}", getName(), key);
 		}
-		evictObject(key);
+		CacheManager.checkEvictRel(this,key);
 		this.memcachedClient.delete(generateKey(key));
 
 	}
@@ -175,7 +172,5 @@ public class MemCacheWrp extends AbstractCacheImpl {
 	public void setExpiredDuration(int expiredDuration) {
 		this.expiredDuration = expiredDuration;
 	}
-	
-	
 
 }

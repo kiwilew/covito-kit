@@ -1,4 +1,4 @@
-package org.covito.kit.cache.common;
+package org.covito.kit.cache;
 
 import java.io.Serializable;
 import java.util.ArrayList;

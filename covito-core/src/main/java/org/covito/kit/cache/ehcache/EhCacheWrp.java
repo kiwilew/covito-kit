@@ -16,14 +16,17 @@
  */
 package org.covito.kit.cache.ehcache;
 
+import java.util.List;
+
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
 
-import org.covito.kit.cache.common.AbstractCacheImpl;
+import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.common.AbsCacheImpl;
+import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.support.SimpleValueWrapper;
 import org.springframework.util.Assert;
 
 /**
@@ -35,7 +38,7 @@ import org.springframework.util.Assert;
  * @author covito
  * @version [v1.0, 2014年6月10日]
  */
-public class EhCacheWrp extends AbstractCacheImpl {
+public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Ehcache cache;
@@ -46,12 +49,11 @@ public class EhCacheWrp extends AbstractCacheImpl {
 	 * @param cacheManager
 	 * @param cache
 	 */
-	public EhCacheWrp(EhCacheManager cacheManager, Ehcache cache) {
+	public EhCacheWrp( Ehcache cache) {
 		Assert.notNull(cache, "Ehcache must not be null");
 		Status status = cache.getStatus();
 		Assert.isTrue(Status.STATUS_ALIVE.equals(status),
 				"An 'alive' Ehcache is required - current cache is " + status.toString());
-		this.cacheManager = cacheManager;
 		this.cache = cache;
 	}
 
@@ -85,7 +87,7 @@ public class EhCacheWrp extends AbstractCacheImpl {
 	 * @return
 	 */
 	@Override
-	public ValueWrapper get(Object key) {
+	public V get(K key) {
 		Element ele = this.cache.get(key);
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("----->Get cache by name {}, key {}", getName(), key);
@@ -93,7 +95,7 @@ public class EhCacheWrp extends AbstractCacheImpl {
 				this.logger.debug("<----- Cache  result {}", ele.getObjectValue());
 			}
 		}
-		return ((ele != null) ? new SimpleValueWrapper(fromStoreValue(ele.getObjectValue())) : null);
+		return (V)fromStoreValue(ele.getObjectValue());
 	}
 
 	/**
@@ -104,13 +106,12 @@ public class EhCacheWrp extends AbstractCacheImpl {
 	 * @param value
 	 */
 	@Override
-	public void put(Object key, Object value) {
+	public void put(K key, V value) {
 		if (this.logger.isDebugEnabled()){
 			this.logger.debug("Put into cache {} by key {}, value {}", new Object[] { getName(),
 					key, value });
 		}
 		this.cache.put(new Element(key, toStoreValue(value)));
-		putObject(key, value);
 	}
 
 	/**
@@ -120,8 +121,8 @@ public class EhCacheWrp extends AbstractCacheImpl {
 	 * @param key
 	 */
 	@Override
-	public void evict(Object key) {
-		evictObject(key);
+	public void evict(K key) {
+		CacheManager.checkEvictRel(this, key);
 		Boolean result = Boolean.valueOf(this.cache.remove(key));
 		if (this.logger.isDebugEnabled()){
 			this.logger.debug("Evict from cache {} by key {}, RESULT = {}", new Object[] {
@@ -139,5 +140,8 @@ public class EhCacheWrp extends AbstractCacheImpl {
 	public void clear() {
 		this.cache.removeAll();
 	}
+
+
+	
 
 }

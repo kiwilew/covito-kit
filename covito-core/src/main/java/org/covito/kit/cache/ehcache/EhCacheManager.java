@@ -23,8 +23,7 @@ import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Status;
 
-import org.covito.kit.cache.common.AbstractCacheManagerImpl;
-import org.springframework.cache.Cache;
+import org.covito.kit.cache.Cache;
 import org.springframework.util.Assert;
 
 /**
@@ -36,7 +35,7 @@ import org.springframework.util.Assert;
  * @author covito
  * @version [v1.0, 2014-6-9]
  */
-public class EhCacheManager extends AbstractCacheManagerImpl {
+public class EhCacheManager  {
 
 	private CacheManager cacheManager;
 	
@@ -46,7 +45,6 @@ public class EhCacheManager extends AbstractCacheManagerImpl {
 	 * @author covito
 	 * @return
 	 */
-	@Override
 	protected Collection<? extends Cache> loadCaches() {
 		Assert.notNull(this.cacheManager, "A backing EhCache CacheManager is required");
 		Status status = this.cacheManager.getStatus();
@@ -60,22 +58,24 @@ public class EhCacheManager extends AbstractCacheManagerImpl {
 		for (int j = 0; j < i; ++j) {
 			String str = names[j];
 			Ehcache ehcache=this.cacheManager.getEhcache(str);
-			haset.add(new EhCacheWrp(this, ehcache));
+			haset.add(new EhCacheWrp(ehcache));
 		}
 		return haset;
 	}
 
 
 	public Cache getCache(String name) {
-		Cache cache = super.getCache(name);
-		if (cache == null) {
-			Ehcache ehcache = this.cacheManager.getEhcache(name);
-			if (ehcache != null) {
-				cache = new EhCacheWrp(this, ehcache);
-				addCache(cache);
-			}
-		}
-		return cache;
+		//Cache cache = getCache(name);
+//		if (cache == null) {
+//			Ehcache ehcache = this.cacheManager.getEhcache(name);
+//			if (ehcache != null) {
+//				cache = new EhCacheWrp(this, ehcache);
+//				addCache(cache);
+//			}
+//		}
+//		return cache;
+		
+		return null;
 	}
 
 	public void setCacheManager(CacheManager cacheManager) {

@@ -17,10 +17,8 @@
 package org.covito.kit.cache;
 
 import org.covito.kit.BaseSpringTest;
-import org.covito.kit.cache.common.CacheNameItem;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.springframework.cache.Cache;
 
 /**
  * 一句话功能简述
@@ -36,7 +34,7 @@ public class CacheTest extends BaseSpringTest {
 	@Test
 	@Ignore
 	public void ehcache(){
-		ICacheManager cm=(ICacheManager)getBean("cacheManager");
+		CacheManager cm=(CacheManager)getBean("cacheManager");
 		
 		System.out.println(cm.getCacheNames());
 		
@@ -49,15 +47,15 @@ public class CacheTest extends BaseSpringTest {
 		
 		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
 		
-		System.out.println(roleCache.get("1").get());
-		System.out.println(userCache.get("u1").get());
+		System.out.println(roleCache.get("1"));
+		System.out.println(userCache.get("u1"));
 		roleCache.evict("1");
 		System.out.println(userCache.get("u1"));
 	}
 	
 	@Test
 	public void memcache(){
-		ICacheManager cm=(ICacheManager)getBean("memCacheManager");
+		CacheManager cm=(CacheManager)getBean("memCacheManager");
 		
 		System.out.println(cm.getCacheNames());
 		
@@ -68,8 +66,8 @@ public class CacheTest extends BaseSpringTest {
 		userCache.put("u1", "u1");
 		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
 		
-		System.out.println(roleCache.get("1").get());
-		System.out.println(userCache.get("u1").get());
+		System.out.println(roleCache.get("1"));
+		System.out.println(userCache.get("u1"));
 		roleCache.evict("1");
 		System.out.println(userCache.get("u1"));
 	}

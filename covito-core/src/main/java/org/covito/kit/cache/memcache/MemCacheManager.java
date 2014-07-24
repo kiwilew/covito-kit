@@ -18,8 +18,7 @@ package org.covito.kit.cache.memcache;
 
 import java.util.Collection;
 
-import org.covito.kit.cache.common.AbstractCacheManagerImpl;
-import org.springframework.cache.Cache;
+import org.covito.kit.cache.Cache;
 
 /**
  * MemCachedManager 
@@ -28,7 +27,7 @@ import org.springframework.cache.Cache;
  * @author  covito
  * @version  [v1.0, 2014年6月18日]
  */
-public class MemCacheManager extends AbstractCacheManagerImpl{
+public class MemCacheManager {
 
 	private Collection<? extends MemCacheWrp> caches;
 	
@@ -38,17 +37,16 @@ public class MemCacheManager extends AbstractCacheManagerImpl{
 	 * @author  covito
 	 * @return
 	 */
-	@Override
 	protected Collection<? extends Cache> loadCaches() {
 		return caches;
 	}
 
-	public void setCaches(Collection<? extends MemCacheWrp> caches) {
-		this.caches = caches;
-		for(MemCacheWrp cache:caches){
-			cache.setCacheManager(this);
-			addCache(cache);
-		}
-	}
+//	public void setCaches(Collection<? extends MemCacheWrp> caches) {
+//		this.caches = caches;
+//		for(MemCacheWrp cache:caches){
+//			cache.setCacheManager(this);
+//			addCache(cache);
+//		}
+//	}
 
 }
