@@ -16,6 +16,7 @@
  */
 package org.covito.kit.cache;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -41,25 +42,25 @@ public class CacheManager {
 
 	private final static Logger logger = LoggerFactory.getLogger(CacheManager.class);
 
+	private Set<String> cacheNames = new LinkedHashSet<String>(16);
+
 	@SuppressWarnings("rawtypes")
 	private ConcurrentMap<String, CacheWrp> cacheMap = new ConcurrentHashMap<String, CacheWrp>(16);
 
-	private static CacheMonitor monitor = new DefaultCacheMonitor();
+	private CacheMonitor monitor = new DefaultCacheMonitor();
 
-	private Set<String> cacheNames = new LinkedHashSet<String>(16);
-
-	private static CacheManager instance = new CacheManager();
+	private Thread cleanUpThread = new Thread() {
+		public void run() {
+			cleanUp();
+		}
+	};
 
 	/**
 	 * 缓存关联关系维护缓存
 	 */
 	private String relCacheName = "SYS_REL_CACHE";
 
-	private static Thread cleanUpThread = new Thread() {
-		public void run() {
-			cleanUp();
-		}
-	};
+	private static CacheManager instance = new CacheManager();
 
 	private CacheManager() {
 		init();
@@ -96,7 +97,7 @@ public class CacheManager {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public static <K,V> void addCache(CacheWrp<K, V> cache) {
+	public static <K, V> void addCache(CacheWrp<K, V> cache) {
 		instance.cacheMap.put(cache.getCache().getName(), cache);
 		instance.cacheNames.add(cache.getCache().getName());
 	}
@@ -109,8 +110,8 @@ public class CacheManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <K, V> Cache<K, V> getCache(String name) {
-		CacheWrp<K, V> cw=instance.cacheMap.get(name);
-		if(cw==null){
+		CacheWrp<K, V> cw = instance.cacheMap.get(name);
+		if (cw == null) {
 			return null;
 		}
 		return cw.getCache();
@@ -126,7 +127,7 @@ public class CacheManager {
 	 */
 	private Collection<? extends CacheWrp> loadCaches() {
 
-		return null;
+		return new ArrayList<CacheWrp>();
 	}
 
 	/**
