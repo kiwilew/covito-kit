@@ -45,7 +45,7 @@ public class CacheTest extends BaseSpringTest {
 		
 		userCache.put("u1", "u1");
 		
-		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
+//		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
 		
 		System.out.println(roleCache.get("1"));
 		System.out.println(userCache.get("u1"));
@@ -64,7 +64,7 @@ public class CacheTest extends BaseSpringTest {
 		
 		roleCache.put("1", "3434");
 		userCache.put("u1", "u1");
-		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
+//		cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
 		
 		System.out.println(roleCache.get("1"));
 		System.out.println(userCache.get("u1"));

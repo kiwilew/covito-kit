@@ -16,11 +16,15 @@
  */
 package org.covito.kit.cache.common;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.covito.kit.cache.Cache;
+import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.CacheNameItem;
+import org.covito.kit.cache.Node;
 import org.covito.kit.cache.monitor.MonitorItem;
 import org.covito.kit.cache.monitor.Visitor;
 import org.slf4j.Logger;
@@ -35,92 +39,133 @@ import org.slf4j.LoggerFactory;
  * @author covito
  * @version [v1.0, 2014-6-9]
  */
-public abstract class AbsCacheImpl<K,V> implements Cache<K,V>,Visitor {
+public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	
-	private final Object NULL_HOLDER = new NullHolder();
-	
-	/**
-	 * 是否允许空值
-	 */
-	private boolean allowNullValues = true;
-	
-	
-	protected AtomicLong queryCount = new AtomicLong();					// 查询次数
-	
-	protected AtomicLong hitCount = new AtomicLong();	
-	
-	protected AtomicLong size = new AtomicLong();	
-	
+
+	Lock l = new ReentrantLock();
+
+	protected AtomicLong queryCount = new AtomicLong(); // 查询次数
+
+	protected AtomicLong hitCount = new AtomicLong();
+
+	protected AtomicLong size = new AtomicLong();
+
 	@Override
 	public long getHitCount() {
 		return hitCount.get();
 	}
-	
-	
+
 	@Override
 	public long getQueryCount() {
 		return queryCount.get();
 	}
-	
-	
+
 	@Override
 	public long getMemoryUsage() {
 		return -1;
 	}
-	
+
 	@Override
 	public long size() {
 		return size.get();
 	}
-	
-	
-	
-	
-	/** 
-	 * 空对象解包
-	 * <p>功能详细描述</p>
-	 *
-	 * @author  covito
-	 * @param storeValue
-	 * @return
-	 */
-	protected Object fromStoreValue(Object storeValue) {
-		if (this.allowNullValues && (storeValue instanceof NullHolder)) {
-			return null;
-		}
-		return storeValue;
-	}
-	
-	/** 
-	 * 空对象包装
-	 * <p>功能详细描述</p>
-	 *
-	 * @author  covito
-	 * @param userValue
-	 * @return
-	 */
-	protected Object toStoreValue(Object userValue) {
-		if ((this.allowNullValues) && (userValue == null)){
-			return NULL_HOLDER;
-		}
-		return userValue;
-	}
-	
-	public static class NullHolder implements Serializable {
-		/**
-		 * serialVersionUID
-		 */
-		private static final long serialVersionUID = 1L;
 
+	@Override
+	public V get(K key) {
+		queryCount.incrementAndGet();
+		l.lock();
+		try {
+			Node<K, V> n = getNode(key);
+			if (n != null) {
+				hitCount.incrementAndGet();
+				return n.getValue();
+			}
+		} finally {
+			l.unlock();
+		}
+		return null;
 	}
-	
+
+	protected abstract Node<K, V> getNode(K key);
+
+	@Override
+	public void put(K key, V value) {
+		l.lock();
+		try {
+			Node<K, V> n = new Node<K, V>(key, value);
+			putNode(n);
+			size.incrementAndGet();
+		} finally {
+			l.unlock();
+		}
+	}
+
+	protected abstract void putNode(Node<K, V> n);
+
+	@Override
+	public void evict(K key) {
+		l.lock();
+		try {
+			for (CacheNameItem item : getNode(key).getItemList()) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Evict from cache {} by key {}", item.getCacheName(),item.getKey());
+				}
+				Cache<Object, ?> tempCache = CacheManager.getCache(item.getCacheName());
+				tempCache.evict(item.getKey());
+			}
+			removeNode(key);
+			size.decrementAndGet();
+		} finally {
+			l.unlock();
+		}
+	}
+
+	protected abstract void removeNode(K key);
+
+	/**
+	 * 新增关联对象
+	 * 
+	 * @param key
+	 * @param relCacheName
+	 * @param relKey
+	 */
+	public void addRel(K key, String relCacheName, Object relKey) {
+		l.lock();
+		try {
+			Node<K, V> n = getNode(key);
+			if (n != null) {
+				n.addRelObject(relCacheName, relKey);
+			}
+		} finally {
+			l.unlock();
+		}
+	}
+
+	/**
+	 * 删除关联对象
+	 * 
+	 * @param key
+	 * @param relCacheName
+	 * @param relKey
+	 */
+	public void removeRel(K key, String relCacheName, Object relKey) {
+		l.lock();
+		try {
+			Node<K, V> n = getNode(key);
+			if (n != null) {
+				n.removeRelObject(relCacheName, relKey);
+			}
+		} finally {
+			l.unlock();
+		}
+	}
+
 	@Override
 	public List<MonitorItem> getMonitorItem() {
 		return null;
 	}
-	
+
 	@Override
 	public long cleanUp() {
 		// TODO Auto-generated method stub

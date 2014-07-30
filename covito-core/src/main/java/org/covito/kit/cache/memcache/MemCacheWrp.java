@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.Node;
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
@@ -40,12 +41,12 @@ import com.whalin.MemCached.MemCachedClient;
 public class MemCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-
 	
 	private String name;
 	private MemCachedClient memcachedClient;
-	private int expiredDuration = 2592000;
 
+	
+	
 	/** 
 	 * Constructor
 	 */
@@ -90,56 +91,6 @@ public class MemCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 * {@inheritDoc}
 	 * 
 	 * @author covito
-	 * @param key
-	 * @return
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public V get(K key) {
-		if (this.logger.isDebugEnabled()) {
-			this.logger.debug("Get cache by name {}, key {}", getName(), key);
-		}
-		Object value = this.memcachedClient.get(generateKey(key));
-		return (V)fromStoreValue(value);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @param key
-	 * @param value
-	 */
-	@Override
-	public void put(K key, V value) {
-		if (this.logger.isDebugEnabled()) {
-			this.logger.debug("put into cache {} by key {}, value {}", new Object[] { getName(),
-					key, value });
-		}
-//		this.memcachedClient.add(generateKey(key), toStoreValue(value), new Date(new Date().getTime()+this.expiredDuration));
-		this.memcachedClient.add(generateKey(key), toStoreValue(value));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @param key
-	 */
-	@Override
-	public void evict(K key) {
-		if (this.logger.isDebugEnabled()) {
-			this.logger.debug("Evict from cache {} by key {}", getName(), key);
-		}
-		CacheManager.checkEvictRel(this,key);
-		this.memcachedClient.delete(generateKey(key));
-
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
 	 */
 	@Override
 	public void clear() {
@@ -164,13 +115,20 @@ public class MemCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 		this.memcachedClient = memcachedClient;
 	}
 
-	/**
-	 * Set expiredDuration
-	 *
-	 * @param expiredDuration the expiredDuration to set
-	 */
-	public void setExpiredDuration(int expiredDuration) {
-		this.expiredDuration = expiredDuration;
+	@Override
+	protected Node<K, V> getNode(K key) {
+		Node<K, V> value = (Node<K, V>)this.memcachedClient.get(generateKey(key));
+		return value;
+	}
+
+	@Override
+	protected void putNode(Node<K, V> n) {
+		this.memcachedClient.add(generateKey(n.getKey()), n);
+	}
+
+	@Override
+	protected void removeNode(K key) {
+		this.memcachedClient.delete(generateKey(key));
 	}
 
 }

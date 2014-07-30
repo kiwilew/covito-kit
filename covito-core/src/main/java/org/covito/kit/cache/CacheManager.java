@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.monitor.CacheMonitor;
 import org.covito.kit.cache.monitor.DefaultCacheMonitor;
 import org.slf4j.Logger;
@@ -54,11 +55,6 @@ public class CacheManager {
 			cleanUp();
 		}
 	};
-
-	/**
-	 * 缓存关联关系维护缓存
-	 */
-	private String relCacheName = "SYS_REL_CACHE";
 
 	private static CacheManager instance = new CacheManager();
 
@@ -130,73 +126,39 @@ public class CacheManager {
 		return new ArrayList<CacheWrp>();
 	}
 
+	
 	/**
-	 * {@inheritDoc}
+	 * 新增关联关系
+	 * 当关联缓存删除时级联删除本身
 	 * 
-	 * @author covito
+	 * @param cacheName 
+	 * @param key
+	 * @param relCacheName 关联缓存名称
+	 * @param relKey 关联缓存
+	 */
+	public static void setCacheRel(String cacheName, Object key, String relCacheName,String relKey) {
+		Cache ca=getCache(relCacheName);
+		if(ca instanceof AbsCacheImpl){
+			AbsCacheImpl absCa=(AbsCacheImpl)ca;
+			absCa.addRel(relKey, cacheName, key);
+		}
+	}
+	
+	
+	/**
+	 * 删除关联关系
 	 * @param cacheName
 	 * @param key
-	 * @param relCache
+	 * @param relCacheName
+	 * @param relKey
 	 */
-	public static void setCacheRel(String cacheName, Object key, CacheNameItem item) {
-		Cache<Object, KeyListRel> cache = getCache(instance.relCacheName);
-		if (cache == null) {
-			logger.error("relCache [name:{}] is not exist!", instance.relCacheName);
-			throw new CacheException("relCache [name:" + instance.relCacheName + "] is not exist!");
-		}
-		Object relKey = new CacheNameItem(item.getCacheName(), item.getKey());
-		KeyListRel rel = cache.get(relKey);
-		if (rel == null) {
-			rel = new KeyListRel(item.getKey());
-		}
-		if (rel.addRelObject(cacheName, key)) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("put into rel cache {} by key {}, value {}", new Object[] { relKey,
-						relKey, rel });
-			}
-			cache.put(relKey, rel);
+	public static void removeCacheRel(String cacheName, Object key, String relCacheName,String relKey) {
+		Cache ca=getCache(cacheName);
+		if(ca instanceof AbsCacheImpl){
+			AbsCacheImpl absCa=(AbsCacheImpl)ca;
+			absCa.removeRel(key, relCacheName, relKey);
 		}
 	}
 
-	/**
-	 * 根据key删除缓存
-	 * <p>
-	 * 功能详细描述
-	 * </p>
-	 * 
-	 * @author covito
-	 * @param key
-	 */
-	public static void checkEvictRel(Cache<?, ?> cache, Object key) {
-		Cache<Object, KeyListRel> relCache = getCache(instance.relCacheName);
-		if (relCache == null) {
-			logger.error("relCache is not exist!");
-			return;
-		}
-		if (logger.isDebugEnabled()) {
-			logger.debug("Evict by key {}", key);
-		}
-		if ((!(cache.getName().equals(relCache.getName())))) {
-			Object str = new CacheNameItem(cache.getName(), key);
-			KeyListRel rel = relCache.get(str);
-			if (rel != null) {
-				if ((rel != null) && (rel.getRelObject() != null)) {
-					/* 删除与之关联的缓存 */
-					for (CacheNameItem item : rel.getRelObject()) {
-						if (logger.isDebugEnabled()) {
-							logger.debug("Evict from cache {} by key {}", item.getCacheName(),
-									item.getKey());
-						}
-						Cache<Object, ?> tempCache = CacheManager.getCache(item.getCacheName());
-						tempCache.evict(item.getKey());
-					}
-				}
-			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Evict key {}  from cache {}", str, relCache.getName());
-			}
-			relCache.evict(str);
-		}
-	}
 
 }

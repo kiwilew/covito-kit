@@ -16,13 +16,17 @@
  */
 package org.covito.kit.cache.ehcache;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
 
+import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.Node;
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
@@ -42,7 +46,33 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Ehcache cache;
+	
+	private net.sf.ehcache.CacheManager cacheManager;
 
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @author covito
+	 * @return
+	 */
+	protected Collection<? extends Cache> loadCaches() {
+		Assert.notNull(this.cacheManager, "A backing EhCache CacheManager is required");
+		Status status = this.cacheManager.getStatus();
+		Assert.isTrue(
+				Status.STATUS_ALIVE.equals(status),
+				"An 'alive' EhCache CacheManager is required - current cache is "
+						+ status.toString());
+		String[] names = this.cacheManager.getCacheNames();
+		LinkedHashSet<Cache> haset = new LinkedHashSet<Cache>(names.length);
+		int i = names.length;
+		for (int j = 0; j < i; ++j) {
+			String str = names[j];
+			Ehcache ehcache=this.cacheManager.getEhcache(str);
+			haset.add(new EhCacheWrp(ehcache));
+		}
+		return haset;
+	}
+	
 	/**
 	 * Constructor
 	 * 
@@ -79,57 +109,6 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 		return this.cache;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @param key
-	 * @return
-	 */
-	@Override
-	public V get(K key) {
-		Element ele = this.cache.get(key);
-		if (this.logger.isDebugEnabled()) {
-			this.logger.debug("----->Get cache by name {}, key {}", getName(), key);
-			if (ele != null) {
-				this.logger.debug("<----- Cache  result {}", ele.getObjectValue());
-			}
-		}
-		return (V)fromStoreValue(ele.getObjectValue());
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @param key
-	 * @param value
-	 */
-	@Override
-	public void put(K key, V value) {
-		if (this.logger.isDebugEnabled()){
-			this.logger.debug("Put into cache {} by key {}, value {}", new Object[] { getName(),
-					key, value });
-		}
-		this.cache.put(new Element(key, toStoreValue(value)));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @param key
-	 */
-	@Override
-	public void evict(K key) {
-		CacheManager.checkEvictRel(this, key);
-		Boolean result = Boolean.valueOf(this.cache.remove(key));
-		if (this.logger.isDebugEnabled()){
-			this.logger.debug("Evict from cache {} by key {}, RESULT = {}", new Object[] {
-					getName(), key, result });
-		}
-
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -141,7 +120,20 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 		this.cache.removeAll();
 	}
 
+	@Override
+	protected Node<K, V> getNode(K key) {
+		Element ele = this.cache.get(key);
+		return (Node<K, V>)ele.getObjectValue();
+	}
 
-	
+	@Override
+	protected void putNode(Node<K, V> n) {
+		this.cache.put(new Element(n.getKey(), n));
+	}
+
+	@Override
+	protected void removeNode(K key) {
+		this.cache.remove(key);
+	}
 
 }
