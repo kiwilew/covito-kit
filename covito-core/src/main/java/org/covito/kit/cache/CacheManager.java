@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.covito.kit.cache.common.AbsCacheImpl;
+import org.covito.kit.cache.common.CacheWrp;
 import org.covito.kit.cache.monitor.CacheMonitor;
 import org.covito.kit.cache.monitor.DefaultCacheMonitor;
 import org.slf4j.Logger;

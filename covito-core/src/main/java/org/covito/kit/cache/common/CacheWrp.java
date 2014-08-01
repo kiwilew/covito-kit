@@ -1,7 +1,8 @@
-package org.covito.kit.cache;
+package org.covito.kit.cache.common;
 
 import java.util.Random;
 
+import org.covito.kit.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

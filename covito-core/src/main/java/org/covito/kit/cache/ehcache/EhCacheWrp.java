@@ -26,8 +26,8 @@ import net.sf.ehcache.Status;
 
 import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.CacheManager;
-import org.covito.kit.cache.Node;
 import org.covito.kit.cache.common.AbsCacheImpl;
+import org.covito.kit.cache.common.Node;
 import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +116,7 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 * @author covito
 	 */
 	@Override
-	public void clear() {
+	public void removeAll() {
 		this.cache.removeAll();
 	}
 

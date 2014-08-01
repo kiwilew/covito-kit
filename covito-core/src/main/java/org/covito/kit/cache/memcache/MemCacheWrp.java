@@ -20,8 +20,8 @@ import java.util.Date;
 import java.util.List;
 
 import org.covito.kit.cache.CacheManager;
-import org.covito.kit.cache.Node;
 import org.covito.kit.cache.common.AbsCacheImpl;
+import org.covito.kit.cache.common.Node;
 import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +93,7 @@ public class MemCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 * @author covito
 	 */
 	@Override
-	public void clear() {
+	public void removeAll() {
 		this.memcachedClient.flushAll();
 	}
 

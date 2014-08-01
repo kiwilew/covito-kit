@@ -20,13 +20,12 @@ public class DefaultCacheMonitor implements CacheMonitor {
 		
 		for(String name:CacheManager.getCacheNames()){
 			Cache<?, ?> c = CacheManager.getCache(name);
-			logger.info("\t name \t|\t impclassName \t|\t size \t|\t  hitCount \t|\t  queryCount  \t|\t  memory \t|\t  else");
+			logger.info("\t name \t|\t impclassName \t|\t size \t|\t  hitCount \t|\t  queryCount  \t|\t   else");
 			if (c instanceof Visitor) {
 				Visitor v=((Visitor) c);
 				long hitCount = v.getHitCount();
 				long size = v.size();
 				long queryCount = v.getQueryCount();
-				long memory = v.getMemoryUsage();
 				List<MonitorItem> items=v.getMonitorItem();
 				String is="";
 				if(items!=null&&items.size()>0){
@@ -34,7 +33,7 @@ public class DefaultCacheMonitor implements CacheMonitor {
 						is+="\t"+i.getName()+":"+i.getValue();
 					}
 				}
-				logger.info("\t" + name + "\t" + c.getClass().getName() + "\t" + size + "\t" + hitCount + "\t" + queryCount + "\t" + memory + is);
+				logger.info("\t" + name + "\t" + c.getClass().getName() + "\t" + size + "\t" + hitCount + "\t" + queryCount + "\t"  + is);
 			} 
 		}
 		

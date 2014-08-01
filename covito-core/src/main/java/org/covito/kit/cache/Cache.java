@@ -49,8 +49,7 @@ public interface Cache<K,V> {
 
 	/**
 	 * 执行清除操作
-	 * @return int 
+	 * @return int 清除的缓存节点个数
 	 */
 	long cleanUp();
-
 }

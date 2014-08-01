@@ -1,4 +1,4 @@
-package org.covito.kit.cache;
+package org.covito.kit.cache.common;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ public final class Node<K, V> {
 	private V value;
 	private List<CacheNameItem> itemList;
 	private long createTime;
+	private long lastVisitTime;
 
 	public Node(K k, V v) {
 		this(k, v, System.currentTimeMillis());
@@ -17,6 +18,7 @@ public final class Node<K, V> {
 		this.key = k;
 		this.value = v;
 		this.createTime = createTime;
+		this.lastVisitTime=createTime;
 	}
 
 	public K getKey() {
@@ -86,6 +88,14 @@ public final class Node<K, V> {
 
 	public List<CacheNameItem> getItemList() {
 		return itemList;
+	}
+
+	public long getLastVisitTime() {
+		return lastVisitTime;
+	}
+
+	public void setLastVisitTime(long lastVisitTime) {
+		this.lastVisitTime = lastVisitTime;
 	}
 	
 }
