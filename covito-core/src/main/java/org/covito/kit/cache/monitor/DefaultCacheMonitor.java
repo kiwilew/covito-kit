@@ -13,7 +13,18 @@ public class DefaultCacheMonitor implements CacheMonitor {
 	
 	private Thread monitorThread;
 	
-	private static final int monitorInterval = 5 * 60 * 1000;// 5min
+	private long monitorInterval = 5 * 60 * 1000;// 5min
+	
+	/**
+	 * 打印log的间隔
+	 * @param monitorInterval
+	 */
+	public DefaultCacheMonitor(long monitorInterval) {
+		this.monitorInterval=monitorInterval;
+	}
+	
+	public DefaultCacheMonitor() {
+	}
 	
 	@Override
 	public void log() {
@@ -60,5 +71,5 @@ public class DefaultCacheMonitor implements CacheMonitor {
 			logger.error("DefaultCacheMonitor monitor thread start error: ", e);
 		}
 	}
-
+	
 }

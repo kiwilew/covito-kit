@@ -94,9 +94,10 @@ public class CacheManager {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public static <K, V> void addCache(CacheWrp<K, V> cache) {
-		instance.cacheMap.put(cache.getCache().getName(), cache);
-		instance.cacheNames.add(cache.getCache().getName());
+	public static <K, V> void addCache(Cache<K, V> cache,long checkInterval) {
+		CacheWrp cacheWrp=new CacheWrp<K, V>(cache, checkInterval);
+		instance.cacheMap.put(cache.getName(), cacheWrp);
+		instance.cacheNames.add(cache.getName());
 	}
 
 	/**

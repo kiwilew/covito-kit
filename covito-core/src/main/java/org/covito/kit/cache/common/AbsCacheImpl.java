@@ -16,10 +16,11 @@
  */
 package org.covito.kit.cache.common;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -49,7 +50,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 
 	Lock l = new ReentrantLock(); // 锁
 
-	protected LinkedList<K> keySet = new LinkedList<K>();
+	protected LinkedKeySet<K> keySet = new LinkedKeySet<K>();
 
 	protected AtomicLong queryCount = new AtomicLong(); // 查询次数
 
@@ -92,6 +93,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 			Node<K, V> n = getNode(key);
 			if (n != null) {
 				hitCount.incrementAndGet();
+				keySet.moveToTop(key);
 				n.setLastVisitTime(System.currentTimeMillis());
 				return n.getValue();
 			} else {
@@ -127,13 +129,15 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	public void evict(K key) {
 		l.lock();
 		try {
-			for (CacheNameItem item : getNode(key).getItemList()) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Evict from cache {} by key {}", item.getCacheName(),
-							item.getKey());
+			if(getNode(key)!=null&&getNode(key).getItemList()!=null){
+				for (CacheNameItem item : getNode(key).getItemList()) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Evict from cache {} by key {}", item.getCacheName(),
+								item.getKey());
+					}
+					Cache<Object, ?> tempCache = CacheManager.getCache(item.getCacheName());
+					tempCache.evict(item.getKey());
 				}
-				Cache<Object, ?> tempCache = CacheManager.getCache(item.getCacheName());
-				tempCache.evict(item.getKey());
 			}
 			removeNode(key);
 			keySet.remove(key);
@@ -203,22 +207,25 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	private int cleanUp(EliminateHandler<K, V> h) {
 		// 删除超时的元素
 		int c1 = 0;
+		
 		try {
 			if (timeout > 0||visitTimeout>0) {
+				Set<Node<K, V>> waitDel=new HashSet<Node<K,V>>();
 				Iterator<K> it = keySet.iterator();
 				while (it.hasNext()) {
 					K key = it.next();
 					Node<K, V> node = getNode(key);
+					if(node==null){
+						continue;
+					}
 					long now = System.currentTimeMillis();
 					if(timeout>0){
 						if (now - node.getCreateTime() >= timeout) {
 							if (h == null) {
-								evict(node.getKey());
-								++c1;
+								waitDel.add(node);
 							} else {
 								if (h.onTimeOut(node)) {
-									evict(node.getKey());
-									++c1;
+									waitDel.add(node);
 								}
 							}
 						}
@@ -226,16 +233,18 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 					if(visitTimeout>0){
 						if (now - node.getLastVisitTime() >= visitTimeout) {
 							if (h == null) {
-								evict(node.getKey());
-								++c1;
+								waitDel.add(node);
 							} else {
 								if (h.onVisitTimeOut(node)) {
-									evict(node.getKey());
-									++c1;
+									waitDel.add(node);
 								}
 							}
 						}
 					}
+				}
+				for(Node<K, V> n: waitDel){
+					evict(n.getKey());
+					++c1;
 				}
 			}
 		} catch (Exception e) {
@@ -246,17 +255,24 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		int c2 = 0;
 		try {
 			long n = size();
-			if (n > maxSize) {
+			if (maxSize>0&&n > maxSize) {
 				final int newSize = (int) (((double) maxSize) * (1.0 - cleanupRate));
 				while (n - c2 > newSize){
-					Node<K, V> node =null;//= //nl.tail;
-					if (node == null){
+					if (keySet.tail == null){
 						break;
 					}
-					if (h.onCleanUpRate(node)) {
+					K k = keySet.tail.value;
+					Node<K, V> node=getNode(k);
+					if(h==null){
 						evict(node.getKey());
 						++c2;
+					}else{
+						if (h.onCleanUpRate(node)) {
+							evict(node.getKey());
+							++c2;
+						}
 					}
+					
 				}
 			}
 		} catch (Exception e) {
@@ -281,12 +297,65 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 
 	protected abstract void removeAll();
 
+	/**
+	 * 缓存获取时Key没有找到Handler
+	 * @param keyNotFound
+	 */
 	public void setKeyNotFound(KeyNotFoundHandler<K, V> keyNotFound) {
 		this.keyNotFound = keyNotFound;
 	}
 
+	/**
+	 * 淘汰机制Handler，用于定制在特定业务中某些实体属性特殊时排除清理范围
+	 * @param eliminateHandler
+	 */
 	public void setEliminateHandler(EliminateHandler<K, V> eliminateHandler) {
 		this.eliminateHandler = eliminateHandler;
 	}
 
+	/**
+	 * 清理时的超时时间[毫秒]（默认-1 不超时）
+	 * @param timeout
+	 */
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
+	}
+
+	/**
+	 * 多久没有访问的超时间[毫秒]（默认-1 不超时）
+	 * @param visitTimeout
+	 */
+	public void setVisitTimeout(long visitTimeout) {
+		this.visitTimeout = visitTimeout;
+	}
+
+	/**
+	 * 缓存元素个数最大值（默认无上限）
+	 * @param maxSize
+	 */
+	public void setMaxSize(int maxSize) {
+		this.maxSize = maxSize;
+	}
+
+	/**
+	 * 设置达到允许最大值时的清除率(默认0.3)
+	 * @param cleanupRate
+	 */
+	public void setCleanupRate(double cleanupRate) {
+		this.cleanupRate = cleanupRate;
+	}
+
+	public static void main(String[] args) {
+		Map<String,String> list=new HashMap<String,String>();
+		list.put("a","a");
+		list.put("b","b");
+		Iterator<Map.Entry<String,String>> i= list.entrySet().iterator();
+		while(i.hasNext()){
+			Map.Entry<String,String> s=i.next();
+			System.out.println(s);
+			list.remove(s.getKey());
+			//i.remove();
+		}
+		System.out.println(list.size());
+	}
 }

@@ -15,6 +15,10 @@ public final class CacheWrp<K, V> {
 
 	private long checkInterval = 1000 * 60 * 60;//默认1小时
 
+	/**
+	 * @param cache
+	 * @param checkInterval 检查间隔
+	 */
 	public CacheWrp(Cache<K, V> cache, long checkInterval) {
 		if (cache == null) {
 			throw new RuntimeException("cache can't be null");

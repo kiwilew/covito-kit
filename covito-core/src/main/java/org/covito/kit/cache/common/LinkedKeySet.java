@@ -1,6 +1,7 @@
 package org.covito.kit.cache.common;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 final class LinkedKeySet<K>  {
@@ -17,8 +18,8 @@ final class LinkedKeySet<K>  {
 		return head == null;
 	}
 
-	public void remove(K value) {
-		KeyNode<K> n=map.get(value);
+	public void remove(K k) {
+		KeyNode<K> n=map.get(k);
 		if (n.next != null) {
 			n.next.prev = n.prev;
 		} else {
@@ -33,7 +34,7 @@ final class LinkedKeySet<K>  {
 			if (head != null)
 				head.prev = null;
 		}
-		map.remove(value);
+		map.remove(k);
 	}
 
 	public void add(K key) {
@@ -49,10 +50,31 @@ final class LinkedKeySet<K>  {
 		map.put(key, n);
 	}
 
-	public void moveToTop(K n) {
+	public void moveToTop(K k) {
 		if (head != tail) {
-			remove(n);
-			add(n);
+			KeyNode<K> n=map.get(k);
+			if (n.next != null) {
+				n.next.prev = n.prev;
+			} else {
+				tail = n.prev;
+				if (tail != null)
+					tail.next = null;
+			}
+			if (n.prev != null) {
+				n.prev.next = n.next;
+			} else {
+				head = n.next;
+				if (head != null)
+					head.prev = null;
+			}
+			if (head == null) {
+				tail = head = n;
+			} else {
+				n.next = head;
+				head.prev = n;
+				head = n;
+				head.prev = null;
+			}
 		}
 	}
 	
@@ -85,6 +107,14 @@ final class LinkedKeySet<K>  {
 		link.moveToTop("cc");
 		
 		System.out.println(link.tail);
+	}
+
+	public long size() {
+		return map.size();
+	}
+
+	public Iterator<K> iterator() {
+		return map.keySet().iterator();
 	}
 
 }
