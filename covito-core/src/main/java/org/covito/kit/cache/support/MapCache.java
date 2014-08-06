@@ -1,4 +1,4 @@
-package org.covito.kit.cache.hashmap;
+package org.covito.kit.cache.support;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

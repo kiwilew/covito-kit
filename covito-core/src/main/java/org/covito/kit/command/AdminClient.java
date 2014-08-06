@@ -10,6 +10,8 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import org.covito.kit.cache.CacheManager;
+
 public class AdminClient {
 
 	public static String sendCmd(String ip, int port, String cmd) {
@@ -52,6 +54,7 @@ public class AdminClient {
 	}
 
 	public static void main(String[] args) throws IOException {
+		
 		for (int i = 0; i < 10; i++) {
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			String c = br.readLine();

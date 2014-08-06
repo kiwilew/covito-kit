@@ -1,6 +1,7 @@
 package org.covito.kit.cache.command;
 
 import java.io.PrintWriter;
+import java.math.BigDecimal;
 import java.util.Collection;
 
 import org.covito.kit.cache.Cache;
@@ -136,24 +137,32 @@ public class CacheInfoCmd implements Command {
 	}
 
 	private void list(PrintWriter out) {
-		String outStr = "CacheName\t\t\t\tQueryCount\tHitCount\tHitRate\tSize\r\n";
+		String format="|%1$-30s|%2$-60s|%3$-12s|%4$-12s|%5$-12s|%6$-12s|%7$-12s";
+		
+		String outStr = String.format(format, new Object[]{"CacheName","Class","QueryCount","HitCount","HitRate","Size","ReflushTime"});
+		out.println(outStr);
 		Collection<String> names = CacheManager.getCacheNames();
 		for (String name:names) {
 			Cache c = CacheManager.getCache(name);
 			if (c == null) {
-				outStr += name + "\t\t\t\tNULL\n";
+				out.println(String.format(format, new Object[]{name,"-","0","0","N/A","0","0"}));
 			} else {
 				if(c instanceof Visitor){
 					Visitor v=(Visitor)c;
 					long qc = v.getQueryCount();
 					long hc = v.getHitCount();
-					String rate = qc > 0 ? (((double) hc * 100) / qc) + "" : "N/A";
-					outStr += name + "\t\t\t\t" + qc + "\t" + hc + "\t" + rate + "%\t" + v.size()
-							+ "\r\n";
+					String rate;
+					if(qc > 0){
+						BigDecimal bd=new BigDecimal(((double) hc * 100) / qc).setScale(2, BigDecimal.ROUND_HALF_UP);
+						bd.setScale(2);
+						rate=bd.floatValue()+"%";
+					}else{
+						rate="N/A";
+					}
+					out.println(String.format(format, new Object[]{name,c.getClass().getName(),qc,hc,rate,v.size(),v.getReflushTime()}));
 				}
 				
 			}
 		}
-		out.println(outStr);
 	}
 }

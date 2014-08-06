@@ -14,21 +14,19 @@
  * under the License.
  *
  */
-package org.covito.kit.cache.ehcache;
+package org.covito.kit.cache.support;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 
+import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
 
 import org.covito.kit.cache.Cache;
-import org.covito.kit.cache.CacheManager;
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.common.Node;
-import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -46,32 +44,6 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final Ehcache cache;
-	
-	private net.sf.ehcache.CacheManager cacheManager;
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @return
-	 */
-	protected Collection<? extends Cache> loadCaches() {
-		Assert.notNull(this.cacheManager, "A backing EhCache CacheManager is required");
-		Status status = this.cacheManager.getStatus();
-		Assert.isTrue(
-				Status.STATUS_ALIVE.equals(status),
-				"An 'alive' EhCache CacheManager is required - current cache is "
-						+ status.toString());
-		String[] names = this.cacheManager.getCacheNames();
-		LinkedHashSet<Cache> haset = new LinkedHashSet<Cache>(names.length);
-		int i = names.length;
-		for (int j = 0; j < i; ++j) {
-			String str = names[j];
-			Ehcache ehcache=this.cacheManager.getEhcache(str);
-			haset.add(new EhCacheWrp(ehcache));
-		}
-		return haset;
-	}
 	
 	/**
 	 * Constructor

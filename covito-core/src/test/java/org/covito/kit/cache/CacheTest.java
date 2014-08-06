@@ -16,11 +16,14 @@
  */
 package org.covito.kit.cache;
 
+import java.text.MessageFormat;
+import java.util.Date;
+
 import org.covito.kit.BaseSpringTest;
-import org.covito.kit.cache.hashmap.MapCache;
 import org.covito.kit.cache.monitor.CacheMonitor;
 import org.covito.kit.cache.monitor.DefaultCacheMonitor;
 import org.covito.kit.cache.monitor.Visitor;
+import org.covito.kit.cache.support.MapCache;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -58,6 +61,7 @@ public class CacheTest extends BaseSpringTest {
 	}
 
 	@Test
+	@Ignore
 	public void memcache() {
 		CacheManager cm = (CacheManager) getBean("memCacheManager");
 
@@ -86,7 +90,15 @@ public class CacheTest extends BaseSpringTest {
 	protected String[] getXmlPath() {
 		return new String[] { "classpath*:site-cache.xml" };
 	}
+	
+	@Test
+	public void testString(){
+		System.out.println(String.format("%1$-18d%2$-18s", -31,45));
+		
+	}
 
+	@Test
+	@Ignore
 	public void testHashMap() {
 		MapCache<String, String> ca = new MapCache<String, String>("cache_testA");
 
@@ -124,7 +136,7 @@ public class CacheTest extends BaseSpringTest {
 		cmonitor.start();
 
 		try {
-			Thread.sleep(1000 * 20);
+			Thread.sleep(1000 * 90);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

@@ -14,18 +14,12 @@
  * under the License.
  *
  */
-package org.covito.kit.cache.memcache;
+package org.covito.kit.cache.support;
 
-import java.util.Date;
-import java.util.List;
-
-import org.covito.kit.cache.CacheManager;
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.common.Node;
-import org.covito.kit.cache.monitor.MonitorItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.support.SimpleValueWrapper;
 
 import com.whalin.MemCached.MemCachedClient;
 

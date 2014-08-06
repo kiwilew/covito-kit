@@ -16,6 +16,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.covito.kit.cache.CacheManager;
+import org.covito.kit.cache.command.CacheInfoCmd;
+import org.covito.kit.cache.support.MapCache;
 import org.covito.kit.utility.Pair;
 import org.covito.kit.utility.StringUtil;
 import org.slf4j.Logger;
@@ -250,6 +253,14 @@ public class AdminServer implements Runnable {
 			}
 		};
 		as.addCommand("test", cmd);
+		MapCache<String, String> ca = new MapCache<String, String>("cach");
+		MapCache<String, String> ca1 = new MapCache<String, String>("cache");
+		CacheManager.addCache(ca);
+		CacheManager.addCache(ca1);
+		CacheManager.getCache("cach").put("a", "dd");
+		
+		Command cache =new CacheInfoCmd();
+		as.addCommand("cache", cache);
 		as.run();
 	}
 

@@ -17,7 +17,7 @@ public final class CacheWrp<K, V> {
 
 	/**
 	 * @param cache
-	 * @param checkInterval 检查间隔
+	 * @param checkInterval 检查间隔 
 	 */
 	public CacheWrp(Cache<K, V> cache, long checkInterval) {
 		if (cache == null) {
@@ -28,6 +28,17 @@ public final class CacheWrp<K, V> {
 		if (this.checkInterval <= 0){
 			this.checkInterval = Long.MAX_VALUE;
 		}
+	}
+	
+	/**
+	 * @param cache
+	 * @param checkInterval 检查间隔
+	 */
+	public CacheWrp(Cache<K, V> cache) {
+		if (cache == null) {
+			throw new RuntimeException("cache can't be null");
+		}
+		this.cache = cache;
 	}
 
 	/**

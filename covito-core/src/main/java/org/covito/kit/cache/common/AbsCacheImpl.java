@@ -30,7 +30,6 @@ import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.CacheManager;
 import org.covito.kit.cache.EliminateHandler;
 import org.covito.kit.cache.KeyNotFoundHandler;
-import org.covito.kit.cache.monitor.MonitorItem;
 import org.covito.kit.cache.monitor.Visitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,6 +192,11 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	@Override
 	public List<MonitorItem> getMonitorItem() {
 		return null;
+	}
+	
+	@Override
+	public long getReflushTime() {
+		return reflushTime;
 	}
 
 	@Override
