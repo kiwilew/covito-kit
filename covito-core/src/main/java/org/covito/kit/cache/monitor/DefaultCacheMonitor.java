@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.CacheManager;
-import org.covito.kit.cache.KeyNotFoundHandler;
 import org.covito.kit.cache.monitor.Visitor.MonitorItem;
 import org.covito.kit.cache.support.MapCache;
 import org.slf4j.Logger;

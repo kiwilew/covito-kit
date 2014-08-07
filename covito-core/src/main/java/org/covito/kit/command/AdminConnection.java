@@ -20,14 +20,14 @@ import org.slf4j.LoggerFactory;
 final class AdminConnection implements Runnable {
 	private Socket socket;
 
-	private AdminServer as;
+	private SocketAdminServer as;
 
 	private static final Pattern pat = Pattern
 			.compile("\\s+(([^'\\\" \\t\\r\\n]+)|('[^'\\r\\n]*')|(\\\"[^\\\"\\r\\n]*\\\"))");
 
 	private static final Logger debugLog = LoggerFactory.getLogger(AdminConnection.class);
 
-	public AdminConnection(AdminServer as, Socket socket) {
+	public AdminConnection(SocketAdminServer as, Socket socket) {
 		this.as = as;
 		this.socket = socket;
 	}
