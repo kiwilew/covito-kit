@@ -1,5 +1,7 @@
 package org.covito.kit.command;
 
+import java.io.OutputStream;
+
 public interface AdminServer {
 
 	/**
@@ -22,9 +24,13 @@ public interface AdminServer {
 	 */
 	void addCommand(String name, Command cmd);
 
-	/**
-	 * 启动服务
+	/** 
+	 * 解析命令并输出到输出流
+	 * <p>功能详细描述</p>
+	 *
+	 * @param cmd 命令
+	 * @param os
 	 */
-	void start();
+	void processCMD(String cmd, OutputStream os);
 
 }

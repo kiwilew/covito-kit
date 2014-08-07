@@ -34,10 +34,28 @@ public class SocketAdminServer extends AbsAdminServer {
 
 	boolean keepAlive = true; // 是否允许客户端保持连接
 
-	String prompt = ""; // 提示符
+	protected final BlockingQueue<Runnable> processQueue = new LinkedBlockingQueue<Runnable>(50); // 处理队列(全局公用)
+	
+	protected final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 50, 30,
+			TimeUnit.SECONDS, processQueue, new ThreadPoolExecutor.DiscardOldestPolicy()); // 处理线程池(全局共用)
 
-	String encoding = "GBK"; // 字符编码
 
+	private Thread thread = new Thread(new Runnable() {
+		@Override
+		public void run() {
+			try {
+				while (true) {
+					try {
+						//threadPool.execute();
+					} catch (Exception e) {
+						log.error("", e);
+					}
+				}
+			} catch (Exception e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+	}); // Accept线程
 
 	/**
 	 * 构造
