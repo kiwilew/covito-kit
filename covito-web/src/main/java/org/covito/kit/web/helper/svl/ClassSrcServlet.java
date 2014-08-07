@@ -40,9 +40,12 @@ public class ClassSrcServlet extends HttpServlet {
 				pw.print("class:" + className + " location：");
 				pw.print("<hr>");
 				pw.print(url);
+				pw.print("<br>");
 			} else {
 				pw.print("class:" + className + " not found!<br>");
 			}
-		} 
+		}
+		pw.flush();
+		pw.close();
 	}
 }
