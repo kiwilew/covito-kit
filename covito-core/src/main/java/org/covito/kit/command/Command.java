@@ -5,6 +5,14 @@ import java.io.PrintWriter;
 public interface Command {
 
 	/** 
+	 * 获取命令名称
+	 * <p>功能详细描述</p>
+	 *
+	 * @return
+	 */
+	String getName();
+	
+	/** 
 	 * 参数解析执行并打印
 	 * <p>功能详细描述</p>
 	 *

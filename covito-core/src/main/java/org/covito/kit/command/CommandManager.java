@@ -10,12 +10,12 @@ import org.covito.kit.utility.Pair;
 
 public class CommandManager {
 
-	private static List<CmdInfo> cmdinfos = new CopyOnWriteArrayList<CmdInfo>(); // 命令信息列表
+	private static List<Command> cmdinfos = new CopyOnWriteArrayList<Command>(); // 命令信息列表
 
 	private static Map<String, Command> cmds = new ConcurrentHashMap<String, Command>(); // 命令名（长或短）和命令接口的对应关系
 	
 	static{
-		addCommand("help", new Command() {
+		addCommand(new Command() {
 			public void execute(String[] argv, PrintWriter out) {
 				if (argv.length > 0) {
 					String name = argv[0];
@@ -30,9 +30,9 @@ public class CommandManager {
 					return;
 				}
 				String format = "%1$-30s%2$-200s";
-				for (CmdInfo c : cmdinfos) {
+				for (Command c : cmdinfos) {
 					out.println(String.format(format, new Object[] { c.getName(),
-							c.getCmd().getInfo() }));
+							c.getInfo() }));
 				}
 			}
 			@Override
@@ -44,6 +44,12 @@ public class CommandManager {
 			public String getUsage() {
 				return "help [cmd]";
 			}
+			
+			@Override
+			public String getName() {
+				return "help";
+			}
+			
 		});
 	}
 	
@@ -71,9 +77,9 @@ public class CommandManager {
 	 *            命令执行的接口
 	 * @return 本对象
 	 */
-	public static void addCommand(String name, Command cmd) {
-		Pair<String, String> pr = parseCmdForAdd(name);
-		cmdinfos.add(new CmdInfo(name, cmd));
+	public static void addCommand(Command cmd) {
+		cmdinfos.add(cmd);
+		Pair<String, String> pr = parseCmdForAdd(cmd.getName());
 		cmds.put(pr.first, cmd);
 		if (pr.second != null) {
 			cmds.put(pr.second, cmd);
@@ -97,23 +103,4 @@ public class CommandManager {
 		return Pair.makePair(ns[0], ns[1]);
 	}
 	
-	/**
-	 * 命令包装类
-	 */
-	public static class CmdInfo {
-		private String name;
-		private Command cmd;
-		CmdInfo(String name, Command cmd) {
-			this.name = name;
-			this.cmd = cmd;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public Command getCmd() {
-			return cmd;
-		}
-	}
 }

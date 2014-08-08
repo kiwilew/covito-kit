@@ -102,5 +102,10 @@ public class BaseCMDServer implements CommandServer {
 	public void setEncoding(String encoding) {
 		this.encoding = encoding;
 	}
+
+	@Override
+	public void startServer() {
+		
+	}
 	
 }

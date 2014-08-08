@@ -11,6 +11,8 @@ import org.covito.kit.cache.monitor.Visitor;
 import org.covito.kit.command.Command;
 
 public class CacheInfoCmd implements Command {
+	
+	private String name="cache";
 
 	@Override
 	public void execute(String[] argv, PrintWriter out) {
@@ -185,4 +187,15 @@ public class CacheInfoCmd implements Command {
 			}
 		}
 	}
+
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	
 }

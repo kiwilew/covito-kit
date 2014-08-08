@@ -9,15 +9,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.covito.kit.cache.CacheManager;
-import org.covito.kit.cache.command.CacheInfoCmd;
-import org.covito.kit.cache.support.MapCache;
 import org.covito.kit.command.BaseCMDServer;
 import org.covito.kit.command.Command;
 import org.covito.kit.command.CommandManager;
@@ -31,8 +27,6 @@ public class SocketCMDServer extends BaseCMDServer {
 	private int port; // 监听端口
 
 	private String address; // 监听地址
-
-	boolean keepAlive = true; // 是否允许客户端保持连接
 
 	protected final BlockingQueue<Runnable> processQueue = new LinkedBlockingQueue<Runnable>(50); // 处理队列(全局公用)
 
@@ -69,11 +63,12 @@ public class SocketCMDServer extends BaseCMDServer {
 						@Override
 						public void run() {
 							BufferedReader in = null;
-							OutputStream os=null;
+							OutputStream os = null;
 							try {
-								in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-								os=socket.getOutputStream();
-								while(true){
+								in = new BufferedReader(new InputStreamReader(socket
+										.getInputStream()));
+								os = socket.getOutputStream();
+								while (true) {
 									String cmd = in.readLine();
 									if (cmd == null) {
 										return;
@@ -81,13 +76,13 @@ public class SocketCMDServer extends BaseCMDServer {
 									processCMD(cmd, os);
 								}
 							} catch (IOException e) {
-							} finally{
+							} finally {
 								try {
 									socket.close();
-									if(in!=null){
+									if (in != null) {
 										in.close();
 									}
-									if(os!=null){
+									if (os != null) {
 										os.close();
 									}
 								} catch (IOException e) {
@@ -112,7 +107,7 @@ public class SocketCMDServer extends BaseCMDServer {
 	 *            要监听的端口
 	 */
 	public SocketCMDServer(String address, int port) {
-		this(address, port, true);
+		this(address, port, "");
 	}
 
 	/**
@@ -122,35 +117,28 @@ public class SocketCMDServer extends BaseCMDServer {
 	 *            要监听的地址
 	 * @param port
 	 *            要监听的端口
-	 * @param keepAlive
-	 *            执行完一个命令后是否保持连接
-	 */
-	public SocketCMDServer(String address, int port, boolean keepAlive) {
-		this(address, port, keepAlive, "");
-	}
-
-	/**
-	 * 构造
-	 * 
-	 * @param address
-	 *            要监听的地址
-	 * @param port
-	 *            要监听的端口
-	 * @param keepAlive
-	 *            执行完一个命令后是否保持连接
 	 * @param prompt
 	 *            命令行提示
 	 */
-	public SocketCMDServer(String address, int port, boolean keepAlive, String prompt) {
-		this(address, port, keepAlive, prompt, "GBK");
+	public SocketCMDServer(String address, int port, String prompt) {
+		this(address, port, prompt, "GBK");
 	}
 
-	public SocketCMDServer(String address, int port, boolean keepAlive, String prompt,
-			String encoding) {
+	/**
+	 * @param address
+	 *            要监听的地址
+	 * @param port
+	 *            要监听的端口
+	 * @param prompt
+	 *            命令行提示
+	 * @param encoding
+	 *            字符编码
+	 */
+	public SocketCMDServer(String address, int port, String prompt, String encoding) {
 		this.address = address;
 		this.port = port;
 
-		CommandManager.addCommand("quit,q", new Command() {
+		CommandManager.addCommand( new Command() {
 			public void execute(String[] argv, PrintWriter out) {
 				out.flush();
 				out.close();
@@ -165,12 +153,15 @@ public class SocketCMDServer extends BaseCMDServer {
 			public String getUsage() {
 				return "";
 			}
+
+			@Override
+			public String getName() {
+				return "quit,q";
+			}
 		});
 
-		this.keepAlive = keepAlive;
 		this.prompt = prompt;
 		this.encoding = encoding;
 	}
-
 
 }

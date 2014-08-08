@@ -12,9 +12,13 @@ import org.covito.kit.cache.support.MapCache;
 import org.covito.kit.command.support.InternalCMDClient;
 import org.covito.kit.command.support.SocketCMDClient;
 import org.covito.kit.command.support.SocketCMDServer;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:command.xml")
 public class CMDTest {
 
 	@Test
@@ -35,9 +39,9 @@ public class CMDTest {
 		}
 	}
 	
-	@BeforeClass
+	//@BeforeClass
 	public static void dataPre(){
-		SocketCMDServer as = new SocketCMDServer("0.0.0.0", 12345, true, "admin> ");
+		CommandServer as = new SocketCMDServer("0.0.0.0", 12345, "admin> ");
 		Command cmd = new Command() {
 			public void execute(String[] argv, PrintWriter out) {
 				out.println("test argv: " + Arrays.toString(argv));
@@ -52,8 +56,13 @@ public class CMDTest {
 			public String getUsage() {
 				return "test [option]";
 			}
+
+			@Override
+			public String getName() {
+				return "test";
+			}
 		};
-		CommandManager.addCommand("test", cmd);
+		CommandManager.addCommand( cmd);
 		MapCache<String, String> ca = new MapCache<String, String>("cach");
 		MapCache<String, String> ca1 = new MapCache<String, String>("cache");
 		CacheManager.addCache(ca);
@@ -61,7 +70,7 @@ public class CMDTest {
 		CacheManager.getCache("cach").put("a", "dd");
 
 		Command cache = new CacheInfoCmd();
-		CommandManager.addCommand("cache", cache);
+		CommandManager.addCommand(cache);
 		as.startServer();
 	}
 }

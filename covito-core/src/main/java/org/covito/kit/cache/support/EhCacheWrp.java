@@ -16,15 +16,10 @@
  */
 package org.covito.kit.cache.support;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-
-import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.Status;
 
-import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.common.Node;
 import org.slf4j.Logger;

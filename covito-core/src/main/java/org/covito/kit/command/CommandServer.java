@@ -13,4 +13,9 @@ public interface CommandServer {
 	 */
 	void processCMD(String cmd, OutputStream os);
 
+	/**
+	 * 开始提供服务
+	 */
+	void startServer();
+
 }
