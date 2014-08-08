@@ -1,4 +1,4 @@
-package org.covito.kit.command;
+package org.covito.kit.command.support;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,9 +10,7 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import org.covito.kit.cache.CacheManager;
-
-public class AdminClient {
+public class SocketCMDClient {
 
 	public static String sendCmd(String ip, int port, String cmd) {
 		try {

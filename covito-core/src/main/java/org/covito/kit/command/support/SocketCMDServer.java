@@ -1,17 +1,16 @@
-package org.covito.kit.command;
+package org.covito.kit.command.support;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -19,14 +18,15 @@ import java.util.concurrent.TimeUnit;
 import org.covito.kit.cache.CacheManager;
 import org.covito.kit.cache.command.CacheInfoCmd;
 import org.covito.kit.cache.support.MapCache;
-import org.covito.kit.utility.Pair;
-import org.covito.kit.utility.StringUtil;
+import org.covito.kit.command.BaseCMDServer;
+import org.covito.kit.command.Command;
+import org.covito.kit.command.CommandManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SocketAdminServer extends AbsAdminServer {
+public class SocketCMDServer extends BaseCMDServer {
 
-	private final Logger log = LoggerFactory.getLogger(SocketAdminServer.class);
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private int port; // 监听端口
 
@@ -35,24 +35,70 @@ public class SocketAdminServer extends AbsAdminServer {
 	boolean keepAlive = true; // 是否允许客户端保持连接
 
 	protected final BlockingQueue<Runnable> processQueue = new LinkedBlockingQueue<Runnable>(50); // 处理队列(全局公用)
-	
+
 	protected final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 50, 30,
 			TimeUnit.SECONDS, processQueue, new ThreadPoolExecutor.DiscardOldestPolicy()); // 处理线程池(全局共用)
 
+	ServerSocket serverSocket = null;
+
+	/**
+	 * 开始提供服务
+	 */
+	public void startServer() {
+		if (serverSocket != null) {
+			return;
+		}
+		try {
+			serverSocket = new ServerSocket();
+			serverSocket.setReuseAddress(true);
+			serverSocket.bind(new InetSocketAddress(InetAddress.getByName(address), port), 50);
+			thread.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage(), e);
+		}
+	}
 
 	private Thread thread = new Thread(new Runnable() {
 		@Override
 		public void run() {
-			try {
-				while (true) {
-					try {
-						//threadPool.execute();
-					} catch (Exception e) {
-						log.error("", e);
-					}
+			while (true) {
+				try {
+					final Socket socket = serverSocket.accept();
+					threadPool.execute(new Runnable() {
+						@Override
+						public void run() {
+							BufferedReader in = null;
+							OutputStream os=null;
+							try {
+								in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+								os=socket.getOutputStream();
+								while(true){
+									String cmd = in.readLine();
+									if (cmd == null) {
+										return;
+									}
+									processCMD(cmd, os);
+								}
+							} catch (IOException e) {
+							} finally{
+								try {
+									socket.close();
+									if(in!=null){
+										in.close();
+									}
+									if(os!=null){
+										os.close();
+									}
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					});
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
 				}
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
 			}
 		}
 	}); // Accept线程
@@ -65,7 +111,7 @@ public class SocketAdminServer extends AbsAdminServer {
 	 * @param port
 	 *            要监听的端口
 	 */
-	public SocketAdminServer(String address, int port) {
+	public SocketCMDServer(String address, int port) {
 		this(address, port, true);
 	}
 
@@ -79,7 +125,7 @@ public class SocketAdminServer extends AbsAdminServer {
 	 * @param keepAlive
 	 *            执行完一个命令后是否保持连接
 	 */
-	public SocketAdminServer(String address, int port, boolean keepAlive) {
+	public SocketCMDServer(String address, int port, boolean keepAlive) {
 		this(address, port, keepAlive, "");
 	}
 
@@ -95,15 +141,16 @@ public class SocketAdminServer extends AbsAdminServer {
 	 * @param prompt
 	 *            命令行提示
 	 */
-	public SocketAdminServer(String address, int port, boolean keepAlive, String prompt) {
+	public SocketCMDServer(String address, int port, boolean keepAlive, String prompt) {
 		this(address, port, keepAlive, prompt, "GBK");
 	}
 
-	public SocketAdminServer(String address, int port, boolean keepAlive, String prompt, String encoding) {
+	public SocketCMDServer(String address, int port, boolean keepAlive, String prompt,
+			String encoding) {
 		this.address = address;
 		this.port = port;
 
-		addCommand("quit,q", new Command() {
+		CommandManager.addCommand("quit,q", new Command() {
 			public void execute(String[] argv, PrintWriter out) {
 				out.flush();
 				out.close();
@@ -120,47 +167,13 @@ public class SocketAdminServer extends AbsAdminServer {
 			}
 		});
 
-		
 		this.keepAlive = keepAlive;
 		this.prompt = prompt;
 		this.encoding = encoding;
 	}
 
-	/**
-	 * 管理线程
-	 */
-	public void run() {
-		ServerSocket serverSocket = null;
-		try {
-			serverSocket = new ServerSocket();
-			serverSocket.setReuseAddress(true);
-			InetSocketAddress addr = new InetSocketAddress(InetAddress.getByName(address), port);
-			serverSocket.bind(addr, 50);
-			while (true) {
-				Socket socket = null;
-				try {
-					socket = serverSocket.accept();
-					threadPool.execute(new AdminConnection(this, socket));
-				} catch (Exception e) {
-					log.error("", e);
-				}
-			}
-
-		} catch (Exception e) {
-			log.error(address + ":" + port, e);
-		} finally {
-			if (serverSocket != null) {
-				try {
-					serverSocket.close();
-				} catch (IOException e) {
-
-				}
-			}
-		}
-	}
-
 	public static void main(String[] argv) {
-		SocketAdminServer as = new SocketAdminServer("0.0.0.0", 12345, true, "admin> ");
+		SocketCMDServer as = new SocketCMDServer("0.0.0.0", 12345, true, "admin> ");
 		Command cmd = new Command() {
 			public void execute(String[] argv, PrintWriter out) {
 				out.println("test argv: " + Arrays.toString(argv));
@@ -176,16 +189,16 @@ public class SocketAdminServer extends AbsAdminServer {
 				return "test [option]";
 			}
 		};
-		as.addCommand("test", cmd);
+		CommandManager.addCommand("test", cmd);
 		MapCache<String, String> ca = new MapCache<String, String>("cach");
 		MapCache<String, String> ca1 = new MapCache<String, String>("cache");
 		CacheManager.addCache(ca);
 		CacheManager.addCache(ca1);
 		CacheManager.getCache("cach").put("a", "dd");
-		
-		Command cache =new CacheInfoCmd();
-		as.addCommand("cache", cache);
-		as.run();
+
+		Command cache = new CacheInfoCmd();
+		CommandManager.addCommand("cache", cache);
+		as.startServer();
 	}
 
 }
