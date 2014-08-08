@@ -1,8 +1,10 @@
 package org.covito.kit.cache.common;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 final class LinkedKeySet<K>  {
 
@@ -115,6 +117,10 @@ final class LinkedKeySet<K>  {
 
 	public Iterator<K> iterator() {
 		return map.keySet().iterator();
+	}
+	
+	public Set<K> keySet(){
+		return Collections.unmodifiableSet(map.keySet());
 	}
 
 }

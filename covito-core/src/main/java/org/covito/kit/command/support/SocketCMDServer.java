@@ -172,33 +172,5 @@ public class SocketCMDServer extends BaseCMDServer {
 		this.encoding = encoding;
 	}
 
-	public static void main(String[] argv) {
-		SocketCMDServer as = new SocketCMDServer("0.0.0.0", 12345, true, "admin> ");
-		Command cmd = new Command() {
-			public void execute(String[] argv, PrintWriter out) {
-				out.println("test argv: " + Arrays.toString(argv));
-			}
-
-			@Override
-			public String getInfo() {
-				return "test command.";
-			}
-
-			@Override
-			public String getUsage() {
-				return "test [option]";
-			}
-		};
-		CommandManager.addCommand("test", cmd);
-		MapCache<String, String> ca = new MapCache<String, String>("cach");
-		MapCache<String, String> ca1 = new MapCache<String, String>("cache");
-		CacheManager.addCache(ca);
-		CacheManager.addCache(ca1);
-		CacheManager.getCache("cach").put("a", "dd");
-
-		Command cache = new CacheInfoCmd();
-		CommandManager.addCommand("cache", cache);
-		as.startServer();
-	}
 
 }

@@ -16,6 +16,7 @@
  */
 package org.covito.kit.cache.common;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -206,6 +207,11 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		int c = cleanUp(eliminateHandler);
 		reflushTime = System.currentTimeMillis() - now;
 		return c;
+	}
+	
+	@Override
+	public Set<K> keySet() {
+		return Collections.unmodifiableSet(keySet.keySet());
 	}
 
 	private int cleanUp(EliminateHandler<K, V> h) {

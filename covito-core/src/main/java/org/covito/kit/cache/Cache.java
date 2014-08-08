@@ -1,5 +1,7 @@
 package org.covito.kit.cache;
 
+import java.util.Set;
+
 import org.springframework.cache.Cache.ValueWrapper;
 
 public interface Cache<K,V> {
@@ -52,4 +54,10 @@ public interface Cache<K,V> {
 	 * @return int 清除的缓存节点个数
 	 */
 	long cleanUp();
+	
+	/**
+	 * 获取所有的key
+	 * @return
+	 */
+	Set<K> keySet();
 }

@@ -50,13 +50,4 @@ public class SocketCMDClient {
 			return "Cmd exception:" + e.getMessage();
 		}
 	}
-
-	public static void main(String[] args) throws IOException {
-		
-		for (int i = 0; i < 10; i++) {
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			String c = br.readLine();
-			System.out.println(sendCmd("127.0.0.1", 12345, c));
-		}
-	}
 }

@@ -29,8 +29,7 @@ public class CommandManager {
 					}
 					return;
 				}
-				out.println("commands: ");
-				String format = "%1$-30s%1$-200s";
+				String format = "%1$-30s%2$-200s";
 				for (CmdInfo c : cmdinfos) {
 					out.println(String.format(format, new Object[] { c.getName(),
 							c.getCmd().getInfo() }));
