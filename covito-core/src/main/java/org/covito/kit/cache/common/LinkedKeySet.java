@@ -22,6 +22,9 @@ final class LinkedKeySet<K>  {
 
 	public void remove(K k) {
 		KeyNode<K> n=map.get(k);
+		if(n==null){
+			return;
+		}
 		if (n.next != null) {
 			n.next.prev = n.prev;
 		} else {

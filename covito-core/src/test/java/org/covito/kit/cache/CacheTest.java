@@ -16,16 +16,15 @@
  */
 package org.covito.kit.cache;
 
-import java.text.MessageFormat;
-import java.util.Date;
-
-import org.covito.kit.BaseSpringTest;
 import org.covito.kit.cache.monitor.CacheMonitor;
 import org.covito.kit.cache.monitor.DefaultCacheMonitor;
 import org.covito.kit.cache.monitor.Visitor;
 import org.covito.kit.cache.support.MapCache;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * 一句话功能简述
@@ -36,67 +35,39 @@ import org.junit.Test;
  * @author covito
  * @version [v1.0, 2014年6月18日]
  */
-public class CacheTest extends BaseSpringTest {
-
-	@Test
-	@Ignore
-	public void ehcache() {
-		CacheManager cm = (CacheManager) getBean("cacheManager");
-
-		System.out.println(cm.getCacheNames());
-
-		Cache roleCache = cm.getCache("role");
-		Cache userCache = cm.getCache("user");
-
-		roleCache.put("1", "3434");
-
-		userCache.put("u1", "u1");
-
-		// cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
-
-		System.out.println(roleCache.get("1"));
-		System.out.println(userCache.get("u1"));
-		roleCache.evict("1");
-		System.out.println(userCache.get("u1"));
-	}
-
-	@Test
-	@Ignore
-	public void memcache() {
-		CacheManager cm = (CacheManager) getBean("memCacheManager");
-
-		System.out.println(cm.getCacheNames());
-
-		Cache roleCache = cm.getCache("role");
-		Cache userCache = cm.getCache("user");
-
-		roleCache.put("1", "3434");
-		userCache.put("u1", "u1");
-		// cm.setCacheRel("user", "u1", new CacheNameItem("role", "1"));
-
-		System.out.println(roleCache.get("1"));
-		System.out.println(userCache.get("u1"));
-		roleCache.evict("1");
-		System.out.println(userCache.get("u1"));
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @author covito
-	 * @return
-	 */
-	@Override
-	protected String[] getXmlPath() {
-		return new String[] { "classpath*:site-cache.xml" };
-	}
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:site-cache.xml")
+public class CacheTest {
 	
+
 	@Test
-	public void testString(){
-		System.out.println(String.format("%1$-18d%2$-18s", -31,45));
+	public void spring() {
+
+		System.out.println(CacheManager.getCacheNames());
+
+		Cache<String,String> roleCache = CacheManager.getCache("role");
+		Cache<String,String> userCache = CacheManager.getCache("user");
+		Cache<String,String> roleUser = CacheManager.getCache("roleUser");
+
+		roleCache.put("1", "3434");
+
+		userCache.put("u1", "u1");
 		
+		roleUser.put("aa", "bb");
+		
+		CacheManager.setCacheRel(roleUser.getName(), "aa", userCache.getName(), "u1");
+
+		System.out.println(roleCache.get("1"));
+		System.out.println(userCache.get("u1"));
+		System.out.println(roleUser.get("aa"));
+		userCache.evict("u1");
+		System.out.println(userCache.get("u1"));
+		System.out.println(roleUser.get("aa"));
 	}
 
+	
+
+	
 	@Test
 	@Ignore
 	public void testHashMap() {
@@ -111,10 +82,11 @@ public class CacheTest extends BaseSpringTest {
 
 		ca.setCleanupRate(0.5);
 		ca.setMaxSize(4);
+		ca.setCheckInterval(5*1000);
 		// ca.setTimeout(1000*2);
 		// ca.setVisitTimeout(1000*1);
 
-		CacheManager.addCache(ca, 1000 * 5);
+		CacheManager.addCache(ca);
 
 		Cache<String, String> c = CacheManager.getCache("cache_testA");
 		c.put("aa", "aa");

@@ -17,16 +17,15 @@
 package org.covito.kit.cache.common;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.covito.kit.cache.AutoRefreshHandler;
+import org.covito.kit.cache.AutoSaveHandler;
 import org.covito.kit.cache.Cache;
 import org.covito.kit.cache.CacheManager;
 import org.covito.kit.cache.EliminateHandler;
@@ -58,6 +57,10 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 
 	private EliminateHandler<K, V> eliminateHandler; // 淘汰机制Handler
 
+	private AutoRefreshHandler<K, V> autoRefresh; // 自动刷新Handler
+	
+	private AutoSaveHandler<K, V> autoSave; // 自动保存Handler
+	
 	private KeyNotFoundHandler<K, V> keyNotFound; // key没有找到处理
 
 	private long timeout = -1; // 超时时间（毫秒）,当为负数，则表示不超时
@@ -69,6 +72,8 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	private double cleanupRate = 0.3; // 清除率，清理时清除的百分比
 
 	private volatile long reflushTime = 0; // 刷新时间
+	
+	private long checkInterval = 1000 * 60 * 60;//检查间隔，默认1小时
 
 	@Override
 	public long getHitCount() {
@@ -191,11 +196,6 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	}
 
 	@Override
-	public List<MonitorItem> getMonitorItem() {
-		return null;
-	}
-	
-	@Override
 	public long getReflushTime() {
 		return reflushTime;
 	}
@@ -207,6 +207,19 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		int c = cleanUp(eliminateHandler);
 		reflushTime = System.currentTimeMillis() - now;
 		return c;
+	}
+	
+	public void autoSaveHandler(){
+		if(autoSave==null){
+			return;
+		}
+	}
+	
+	public void autoRefreshHandler(){
+		if(autoRefresh==null){
+			return;
+		}
+		
 	}
 	
 	@Override
@@ -355,17 +368,35 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		this.cleanupRate = cleanupRate;
 	}
 
-	public static void main(String[] args) {
-		Map<String,String> list=new HashMap<String,String>();
-		list.put("a","a");
-		list.put("b","b");
-		Iterator<Map.Entry<String,String>> i= list.entrySet().iterator();
-		while(i.hasNext()){
-			Map.Entry<String,String> s=i.next();
-			System.out.println(s);
-			list.remove(s.getKey());
-			//i.remove();
-		}
-		System.out.println(list.size());
+	public long getCheckInterval() {
+		return checkInterval;
 	}
+
+	/**
+	 * 获取检查间隔
+	 * @param checkInterval
+	 */
+	public void setCheckInterval(long checkInterval) {
+		this.checkInterval = checkInterval;
+		if (this.checkInterval <= 0){
+			this.checkInterval = Long.MAX_VALUE;
+		}
+	}
+
+	public AutoRefreshHandler<K, V> getAutoRefresh() {
+		return autoRefresh;
+	}
+
+	public void setAutoRefresh(AutoRefreshHandler<K, V> autoRefresh) {
+		this.autoRefresh = autoRefresh;
+	}
+
+	public AutoSaveHandler<K, V> getAutoSave() {
+		return autoSave;
+	}
+
+	public void setAutoSave(AutoSaveHandler<K, V> autoSave) {
+		this.autoSave = autoSave;
+	}
+
 }

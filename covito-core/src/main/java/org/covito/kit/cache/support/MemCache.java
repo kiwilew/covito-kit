@@ -16,42 +16,31 @@
  */
 package org.covito.kit.cache.support;
 
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-import net.sf.ehcache.Status;
-
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.common.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
+
+import com.whalin.MemCached.MemCachedClient;
 
 /**
- * EhCache包装类
+ * MemcachedCache 包装类
  * <p>
  * 功能详细描述
  * </p>
  * 
  * @author covito
- * @version [v1.0, 2014年6月10日]
+ * @version [v1.0, 2014年6月18日]
  */
-public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
+public class MemCache<K, V> extends AbsCacheImpl<K, V> {
 
-	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private final Ehcache cache;
-	
+	private String name;
+	private MemCachedClient memcachedClient;
+
 	/**
 	 * Constructor
-	 * 
-	 * @param cacheManager
-	 * @param cache
 	 */
-	public EhCacheWrp( Ehcache cache) {
-		Assert.notNull(cache, "Ehcache must not be null");
-		Status status = cache.getStatus();
-		Assert.isTrue(Status.STATUS_ALIVE.equals(status),
-				"An 'alive' Ehcache is required - current cache is " + status.toString());
-		this.cache = cache;
+	public MemCache(String name,MemCachedClient memcachedClient) {
+		this.name=name;
+		this.memcachedClient=memcachedClient;
 	}
 
 	/**
@@ -62,7 +51,7 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 */
 	@Override
 	public String getName() {
-		return cache.getName();
+		return this.name;
 	}
 
 	/**
@@ -73,9 +62,22 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 */
 	@Override
 	public Object getNativeCache() {
-		return this.cache;
+		return this.memcachedClient;
 	}
 
+	/**
+	 * 生成key
+	 * <p>
+	 * 功能详细描述
+	 * </p>
+	 * 
+	 * @author covito
+	 * @param key
+	 * @return
+	 */
+	protected String generateKey(Object key) {
+		return this.name + "#" + key;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -84,23 +86,24 @@ public class EhCacheWrp<K,V> extends AbsCacheImpl<K,V> {
 	 */
 	@Override
 	public void removeAll() {
-		this.cache.removeAll();
+		this.memcachedClient.flushAll();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Node<K, V> getNode(K key) {
-		Element ele = this.cache.get(key);
-		return (Node<K, V>)ele.getObjectValue();
+		Node<K, V> value = (Node<K, V>) this.memcachedClient.get(generateKey(key));
+		return value;
 	}
 
 	@Override
 	protected void putNode(Node<K, V> n) {
-		this.cache.put(new Element(n.getKey(), n));
+		this.memcachedClient.add(generateKey(n.getKey()), n);
 	}
 
 	@Override
 	protected void removeNode(K key) {
-		this.cache.remove(key);
+		this.memcachedClient.delete(generateKey(key));
 	}
 
 }

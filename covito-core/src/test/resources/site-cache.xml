@@ -11,49 +11,57 @@
 	default-lazy-init="false">
 
 	<description>Spring file Services Configuration</description>
-
-	<bean id="cacheManager" class="org.covito.kit.cache.ehcache.EhCacheManager">
-		<property name="cacheManager" ref="ehcacheFactory" />
-		<property name="supportQueryCache" value="true" />
+	
+	<bean id="CacheAware" class="org.covito.kit.cache.spring.CacheAware"/>
+	
+	<bean id="RoleCache" class="org.covito.kit.cache.support.MapCache">
+		<constructor-arg value="role"/>
+		<property name="checkInterval" value="10000"/>
+		<property name="maxSize" value="10000"/>
+		<property name="cleanupRate" value="0.4"/>
+		<property name="visitTimeout" value="60000"/>
+		<property name="timeout" value="20000"/>
+		<property name="keyNotFound" >
+			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
+		</property>
 	</bean>
-
-
-	<bean id="ehcacheFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
-		<property name="configLocation" value="classpath:ehcache.xml" />
+	
+	<bean id="UserEHCache" class="org.covito.kit.cache.support.EhCache">
+		<constructor-arg>
+			<bean class="org.covito.kit.cache.spring.EhCacheFactory">
+				<constructor-arg value="user"/>
+				<constructor-arg ref="ehcacheManager"/>
+			</bean>
+		</constructor-arg>
+		<property name="checkInterval" value="10000"/>
+		<property name="maxSize" value="10000"/>
+		<property name="cleanupRate" value="0.4"/>
+		<property name="visitTimeout" value="60000"/>
+		<property name="timeout" value="20000"/>
+		<property name="keyNotFound" >
+			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
+		</property>
 	</bean>
-
-	<bean id="memCacheManager" class="org.covito.kit.cache.memcache.MemCacheManager">
-		<property name="supportQueryCache" value="true" />
-		<property name="caches">
-			<set>
-				<bean class="org.covito.kit.cache.memcache.MemCacheWrp">
-					<property name="name" value="SYS_REL_CACHE" />
-					<property name="memcachedClient" ref="memcachedClient" />
-				</bean>
-				<bean class="org.covito.kit.cache.memcache.MemCacheWrp">
-					<property name="name" value="role" />
-					<property name="memcachedClient" ref="memcachedClient" />
-					<property name="expiredDuration" value="3600" />
-				</bean>
-				<bean class="org.covito.kit.cache.memcache.MemCacheWrp">
-					<property name="name" value="user" />
-					<property name="memcachedClient" ref="memcachedClient" />
-					<property name="expiredDuration" value="3600" />
-				</bean>
-			</set>
+	
+	<bean id="RoleMemCache" class="org.covito.kit.cache.support.MemCache">
+		<constructor-arg value="roleUser" />
+		<constructor-arg ref="memcachedClient" />
+		<property name="checkInterval" value="10000"/>
+		<property name="maxSize" value="10000"/>
+		<property name="cleanupRate" value="0.4"/>
+		<property name="visitTimeout" value="60000"/>
+		<property name="timeout" value="20000"/>
+		<property name="keyNotFound" >
+			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
 		</property>
 	</bean>
 
-	<!-- <bean id="memcachedClient" class="net.spy.memcached.spring.MemcachedClientFactoryBean"> <property 
-		name="servers" value="192.168.142.168:11211" /> <property name="protocol" value="BINARY" /> <property 
-		name="transcoder"> <bean class="net.spy.memcached.transcoders.SerializingTranscoder"> <property name="compressionThreshold" 
-		value="1024" /> </bean> </property> <property name="opTimeout" value="1000" /> <property name="timeoutExceptionThreshold" 
-		value="1998" /> <property name="hashAlg"> <value type="net.spy.memcached.DefaultHashAlgorithm">KETAMA_HASH</value> 
-		</property> <property name="locatorType" value="CONSISTENT" /> <property name="failureMode" value="Redistribute" 
-		/> <property name="useNagleAlgorithm" value="false" /> </bean> -->
+	<bean id="ehcacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+		<property name="configLocation" value="classpath:ehcache.xml" />
+	</bean>
 
 	<bean id="memCachedPool" class="com.whalin.MemCached.SockIOPool" factory-method="getInstance"
-		init-method="initialize" destroy-method="shutDown">
+		init-method="initialize" destroy-method="shutDown" >
 		<constructor-arg>
 			<value>memCachedPool</value>
 		</constructor-arg>

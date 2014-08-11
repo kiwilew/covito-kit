@@ -13,8 +13,6 @@ public final class CacheWrp<K, V> {
 
 	private long lastCheckTime = System.currentTimeMillis();
 
-	private long checkInterval = 1000 * 60 * 60;//默认1小时
-
 	/**
 	 * @param cache
 	 * @param checkInterval 检查间隔 
@@ -24,10 +22,6 @@ public final class CacheWrp<K, V> {
 			throw new RuntimeException("cache can't be null");
 		}
 		this.cache = cache;
-		this.checkInterval = checkInterval;
-		if (this.checkInterval <= 0){
-			this.checkInterval = Long.MAX_VALUE;
-		}
 	}
 	
 	/**
@@ -63,16 +57,18 @@ public final class CacheWrp<K, V> {
 	}
 
 	public boolean cleanUp() {
-
-		if (System.currentTimeMillis() - this.lastCheckTime < this.checkInterval) {
-			return false;
-		}
-		long n = 0;
-		try {
-			n = cache.cleanUp();
-		} finally {
-			lastCheckTime = System.currentTimeMillis();
-			logger.debug("cleanUp, remove " + n + " nodes.");
+		if(cache instanceof AbsCacheImpl){
+			AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
+			if (System.currentTimeMillis() - this.lastCheckTime < ct.getCheckInterval()) {
+				return false;
+			}
+			long n = 0;
+			try {
+				n = cache.cleanUp();
+			} finally {
+				lastCheckTime = System.currentTimeMillis();
+				logger.debug("cleanUp, remove " + n + " nodes.");
+			}
 		}
 		return true;
 	}

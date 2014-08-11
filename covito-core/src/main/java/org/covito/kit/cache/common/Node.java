@@ -1,9 +1,13 @@
 package org.covito.kit.cache.common;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class Node<K, V> {
+public final class Node<K, V> implements Serializable{
+	
+	private static final long serialVersionUID = -1413383313837750031L;
+	
 	private K key;
 	private V value;
 	private List<CacheNameItem> itemList;
