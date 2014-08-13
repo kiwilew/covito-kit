@@ -19,7 +19,10 @@ package org.covito.kit.cache.common;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -74,7 +77,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	private volatile long reflushTime = 0; // 刷新时间
 	
 	private long checkInterval = 1000 * 60 * 60;//检查间隔，默认1小时
-
+	
 	@Override
 	public long getHitCount() {
 		return hitCount.get();
@@ -200,7 +203,6 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		return reflushTime;
 	}
 
-	@Override
 	public long cleanUp() {
 		logger.info("cleanUp begin...");
 		long now = System.currentTimeMillis();
@@ -209,17 +211,48 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		return c;
 	}
 	
+	/** 
+	 * 自动保存
+	 * <p>功能详细描述</p>
+	 *
+	 */
 	public void autoSaveHandler(){
 		if(autoSave==null){
 			return;
 		}
+		for(K key:this.keySet()){
+			boolean success=false;
+			try {
+				if(this.getNode(key)==null){
+					continue;
+				}
+				success=autoSave.save(key,this.getNode(key).getValue());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if(success){
+				this.evict(key);
+			}
+		}
 	}
 	
+	/** 
+	 * 自动刷新
+	 * <p>功能详细描述</p>
+	 *
+	 */
 	public void autoRefreshHandler(){
 		if(autoRefresh==null){
 			return;
 		}
-		
+		Map<K,V> remap=autoRefresh.refresh();
+		if(remap==null){
+			return;
+		}
+		this.clear();
+		for(Entry<K,V> e:remap.entrySet()){
+			this.put(e.getKey(), e.getValue());
+		}
 	}
 	
 	@Override

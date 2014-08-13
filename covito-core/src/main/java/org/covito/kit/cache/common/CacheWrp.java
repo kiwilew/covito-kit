@@ -1,28 +1,20 @@
 package org.covito.kit.cache.common;
 
-import java.util.Random;
-
 import org.covito.kit.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class CacheWrp<K, V> {
-	private static final Logger logger = LoggerFactory.getLogger(CacheWrp.class);
+	
+	final Logger logger = LoggerFactory.getLogger(CacheWrp.class);
 
 	private Cache<K, V> cache;
 
-	private long lastCheckTime = System.currentTimeMillis();
-
-	/**
-	 * @param cache
-	 * @param checkInterval 检查间隔 
-	 */
-	public CacheWrp(Cache<K, V> cache, long checkInterval) {
-		if (cache == null) {
-			throw new RuntimeException("cache can't be null");
-		}
-		this.cache = cache;
-	}
+	private long lastcleanUpTime = System.currentTimeMillis();
+	
+	private long lastSaveTime = System.currentTimeMillis();
+	
+	private long lastRefreshTime = System.currentTimeMillis();
 	
 	/**
 	 * @param cache
@@ -35,19 +27,6 @@ public final class CacheWrp<K, V> {
 		this.cache = cache;
 	}
 
-	/**
-	 * @param cache
-	 * @param checkInterval
-	 * @param peakShiftingRange 随机区间  检查时间推迟？秒
-	 */
-	public CacheWrp(Cache<K, V> cache, long checkInterval, int peakShiftingRange) {
-		this(cache, checkInterval);
-		Random r = new Random();
-		int shift = r.nextInt(peakShiftingRange);
-		logger.debug("peakShifting: " + shift);
-		lastCheckTime += shift * 1000;
-	}
-
 	public Cache<K, V> getCache() {
 		return cache;
 	}
@@ -56,21 +35,70 @@ public final class CacheWrp<K, V> {
 		cache = c;
 	}
 
-	public boolean cleanUp() {
+	public Runnable cleanUp() {
 		if(cache instanceof AbsCacheImpl){
-			AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
-			if (System.currentTimeMillis() - this.lastCheckTime < ct.getCheckInterval()) {
-				return false;
+			final AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
+			if (System.currentTimeMillis() - this.lastcleanUpTime < ct.getCheckInterval()) {
+				return null;
 			}
-			long n = 0;
 			try {
-				n = cache.cleanUp();
+				return new Runnable() {
+					@Override
+					public void run() {
+						ct.cleanUp();
+					}
+				};
 			} finally {
-				lastCheckTime = System.currentTimeMillis();
-				logger.debug("cleanUp, remove " + n + " nodes.");
+				lastcleanUpTime = System.currentTimeMillis();
 			}
 		}
-		return true;
+		return null;
+	}
+	
+	public Runnable saveCheck() {
+		if(cache instanceof AbsCacheImpl){
+			final AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
+			if(ct.getAutoSave()==null){
+				return null;
+			}
+			if (System.currentTimeMillis() - this.lastSaveTime < ct.getAutoSave().getAutoSaveTime()) {
+				return null;
+			}
+			try {
+				return new Runnable() {
+					@Override
+					public void run() {
+						ct.autoSaveHandler();
+					}
+				};
+			} finally {
+				lastSaveTime = System.currentTimeMillis();
+			}
+		}
+		return null;
+	}
+	
+	public Runnable refreshCheck() {
+		if(cache instanceof AbsCacheImpl){
+			final AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
+			if(ct.getAutoRefresh()==null){
+				return null;
+			}
+			if (System.currentTimeMillis() - this.lastRefreshTime < ct.getAutoRefresh().getAutoRefreshTime()) {
+				return null;
+			}
+			try {
+				return new Runnable() {
+					@Override
+					public void run() {
+						ct.autoRefreshHandler();
+					}
+				};
+			} finally {
+				lastRefreshTime = System.currentTimeMillis();
+			}
+		}
+		return null;
 	}
 
 }

@@ -21,8 +21,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.covito.kit.cache.common.AbsCacheImpl;
 import org.covito.kit.cache.common.CacheWrp;
@@ -50,10 +54,15 @@ public class CacheManager {
 	private ConcurrentMap<String, CacheWrp> cacheMap = new ConcurrentHashMap<String, CacheWrp>(16);
 
 	private CacheMonitor monitor = new DefaultCacheMonitor();
+	
+	protected static final BlockingQueue<Runnable> processQueue = new LinkedBlockingQueue<Runnable>(50); // 处理队列(全局公用)
+	
+	protected static final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 50, 30,
+			TimeUnit.SECONDS, processQueue, new ThreadPoolExecutor.DiscardOldestPolicy()); // 处理线程池(全局共用)
 
-	private Thread cleanUpThread = new Thread() {
+	private Thread checkThread = new Thread() {
 		public void run() {
-			cleanUp();
+			check();
 		}
 	};
 
@@ -62,7 +71,7 @@ public class CacheManager {
 	private CacheManager() {
 		init();
 		monitor.start();
-		cleanUpThread.start();
+		checkThread.start();
 	}
 
 	public void init() {
@@ -75,20 +84,33 @@ public class CacheManager {
 		}
 	}
 
-	private static void cleanUp() {
+	private static void check() {
 		while (true) {
 			try {
 				Collection<CacheWrp> vs = instance.cacheMap.values();
 				for (CacheWrp o : vs) {
 					try {
-						o.cleanUp();
+						Runnable task=o.cleanUp();
+						if(task!=null){
+							threadPool.execute(task);
+						}
+						
+						Runnable save=o.saveCheck();
+						if(save!=null){
+							threadPool.execute(save);
+						}
+						
+						Runnable refresh=o.refreshCheck();
+						if(refresh!=null){
+							threadPool.execute(refresh);
+						}
 					} catch (Exception e) {
 						logger.error("cleanUp " + o, e);
 					}
 				}
 				Thread.sleep(10000);
 			} catch (Exception e) {
-				logger.error("cleanUp: ", e);
+				logger.error("check: ", e);
 			}
 		}
 	}

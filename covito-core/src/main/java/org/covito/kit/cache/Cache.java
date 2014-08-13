@@ -50,12 +50,6 @@ public interface Cache<K,V> {
 	void clear();
 
 	/**
-	 * 执行清除操作
-	 * @return int 清除的缓存节点个数
-	 */
-	long cleanUp();
-	
-	/**
 	 * 获取所有的key
 	 * @return
 	 */
