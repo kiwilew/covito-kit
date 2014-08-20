@@ -4,7 +4,6 @@ import net.sf.ehcache.Cache;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 
-import org.covito.kit.cache.CacheException;
 import org.springframework.beans.factory.FactoryBean;
 
 public class EhCacheFactory implements FactoryBean<Ehcache>{
@@ -21,11 +20,12 @@ public class EhCacheFactory implements FactoryBean<Ehcache>{
 	@Override
 	public Ehcache getObject() throws Exception {
 		if (cacheManager == null) {
-			throw new CacheException("cacheManager is null!");
+			cacheManager=new CacheManager();
 		}
 		Cache sfca = cacheManager.getCache(name);
 		if (sfca == null) {
-			throw new CacheException("not found cache name is " + name + " cache!");
+			cacheManager.addCache(name);
+			sfca=cacheManager.getCache(name);
 		}
 		return sfca;
 	}
