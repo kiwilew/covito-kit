@@ -41,6 +41,7 @@ public class CacheTest {
 	
 
 	@Test
+	@Ignore
 	public void spring() {
 
 		System.out.println(CacheManager.getCacheNames());
@@ -65,7 +66,53 @@ public class CacheTest {
 		System.out.println(roleUser.get("aa"));
 	}
 
+
+	@Test
+	public void testAutoRefresh() {
+
+		System.out.println(CacheManager.getCacheNames());
+
+		final Cache<String,String> autoRefresh = CacheManager.getCache("autoRefresh");
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					System.out.println(autoRefresh.get("A"));;
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}).start();;
+		Thread.interrupted();
+	}
 	
+	@Test
+	public void testAutoSave() {
+		
+		System.out.println(CacheManager.getCacheNames());
+		
+		final Cache<String,String> autoRefresh = CacheManager.getCache("autoRefresh");
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					System.out.println(autoRefresh.get("A"));;
+					try {
+						Thread.sleep(3000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}).start();;
+		Thread.interrupted();
+	}
+
 
 	
 	@Test
@@ -73,7 +120,7 @@ public class CacheTest {
 	public void testHashMap() {
 		MapCache<String, String> ca = new MapCache<String, String>("cache_testA");
 
-		ca.setKeyNotFound(new KeyNotFoundHandler<String, String>() {
+		ca.setKeyNotFoundHandler(new KeyNotFoundHandler<String, String>() {
 			@Override
 			public String onKeyNotFound(String key) {
 				return "unkown";

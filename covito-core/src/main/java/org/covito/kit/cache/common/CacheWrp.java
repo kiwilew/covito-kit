@@ -58,10 +58,10 @@ public final class CacheWrp<K, V> {
 	public Runnable saveCheck() {
 		if(cache instanceof AbsCacheImpl){
 			final AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
-			if(ct.getAutoSave()==null){
+			if(ct.getAutoSaveHandler()==null){
 				return null;
 			}
-			if (System.currentTimeMillis() - this.lastSaveTime < ct.getAutoSave().getAutoSaveTime()) {
+			if (System.currentTimeMillis() - this.lastSaveTime < ct.getAutoSaveHandler().getAutoSaveTime()) {
 				return null;
 			}
 			try {
@@ -81,10 +81,10 @@ public final class CacheWrp<K, V> {
 	public Runnable refreshCheck() {
 		if(cache instanceof AbsCacheImpl){
 			final AbsCacheImpl<K, V> ct=(AbsCacheImpl<K, V>)cache;
-			if(ct.getAutoRefresh()==null){
+			if(ct.getAutoRefreshHandler()==null){
 				return null;
 			}
-			if (System.currentTimeMillis() - this.lastRefreshTime < ct.getAutoRefresh().getAutoRefreshTime()) {
+			if (System.currentTimeMillis() - this.lastRefreshTime < ct.getAutoRefreshHandler().getAutoRefreshTime()) {
 				return null;
 			}
 			try {

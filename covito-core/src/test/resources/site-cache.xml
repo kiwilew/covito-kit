@@ -21,10 +21,24 @@
 		<property name="cleanupRate" value="0.4"/>
 		<property name="visitTimeout" value="60000"/>
 		<property name="timeout" value="20000"/>
-		<property name="keyNotFound" >
+		<property name="keyNotFoundHandler" >
 			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
 		</property>
 	</bean>
+	
+	<bean id="AutoRefreshCache" class="org.covito.kit.cache.support.MapCache">
+		<constructor-arg value="autoRefresh"/>
+		<property name="keyNotFoundHandler" >
+			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
+		</property>
+		<property name="autoRefreshHandler" >
+			<bean class="org.covito.kit.cache.TestAutoRefresh"/>
+		</property>
+		<property name="autoSaveHandler" >
+			<bean class="org.covito.kit.cache.TestAutoSave"/>
+		</property>
+	</bean>
+	
 	
 	<bean id="UserEHCache" class="org.covito.kit.cache.support.EhCache">
 		<constructor-arg>
@@ -38,7 +52,7 @@
 		<property name="cleanupRate" value="0.4"/>
 		<property name="visitTimeout" value="60000"/>
 		<property name="timeout" value="20000"/>
-		<property name="keyNotFound" >
+		<property name="keyNotFoundHandler" >
 			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
 		</property>
 	</bean>
@@ -51,7 +65,7 @@
 		<property name="cleanupRate" value="0.4"/>
 		<property name="visitTimeout" value="60000"/>
 		<property name="timeout" value="20000"/>
-		<property name="keyNotFound" >
+		<property name="keyNotFoundHandler" >
 			<bean class="org.covito.kit.cache.TestKeyNotFound"/>
 		</property>
 	</bean>

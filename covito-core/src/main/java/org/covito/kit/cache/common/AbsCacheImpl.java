@@ -60,11 +60,11 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 
 	private EliminateHandler<K, V> eliminateHandler; // 淘汰机制Handler
 
-	private AutoRefreshHandler<K, V> autoRefresh; // 自动刷新Handler
+	private AutoRefreshHandler<K, V> autoRefreshHandler; // 自动刷新Handler
 	
-	private AutoSaveHandler<K, V> autoSave; // 自动保存Handler
+	private AutoSaveHandler<K, V> autoSaveHandler; // 自动保存Handler
 	
-	private KeyNotFoundHandler<K, V> keyNotFound; // key没有找到处理
+	private KeyNotFoundHandler<K, V> keyNotFoundHandler; // key没有找到处理
 
 	private long timeout = -1; // 超时时间（毫秒）,当为负数，则表示不超时
 	
@@ -105,8 +105,8 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 				n.setLastVisitTime(System.currentTimeMillis());
 				return n.getValue();
 			} else {
-				if (keyNotFound != null) {
-					V value = keyNotFound.onKeyNotFound(key);
+				if (keyNotFoundHandler != null) {
+					V value = keyNotFoundHandler.onKeyNotFound(key);
 					this.put(key, value);
 					return get(key);
 				}
@@ -204,7 +204,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	}
 
 	public long cleanUp() {
-		logger.info("cleanUp begin...");
+		logger.debug("[{}]cleanUp begin...",getName());
 		long now = System.currentTimeMillis();
 		int c = cleanUp(eliminateHandler);
 		reflushTime = System.currentTimeMillis() - now;
@@ -217,7 +217,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	 *
 	 */
 	public void autoSaveHandler(){
-		if(autoSave==null){
+		if(autoSaveHandler==null){
 			return;
 		}
 		for(K key:this.keySet()){
@@ -226,7 +226,7 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 				if(this.getNode(key)==null){
 					continue;
 				}
-				success=autoSave.save(key,this.getNode(key).getValue());
+				success=autoSaveHandler.save(key,this.getNode(key).getValue());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -242,10 +242,10 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	 *
 	 */
 	public void autoRefreshHandler(){
-		if(autoRefresh==null){
+		if(autoRefreshHandler==null){
 			return;
 		}
-		Map<K,V> remap=autoRefresh.refresh();
+		Map<K,V> remap=autoRefreshHandler.refresh();
 		if(remap==null){
 			return;
 		}
@@ -357,8 +357,8 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 	 * 缓存获取时Key没有找到Handler
 	 * @param keyNotFound
 	 */
-	public void setKeyNotFound(KeyNotFoundHandler<K, V> keyNotFound) {
-		this.keyNotFound = keyNotFound;
+	public void setKeyNotFoundHandler(KeyNotFoundHandler<K, V> keyNotFound) {
+		this.keyNotFoundHandler = keyNotFound;
 	}
 
 	/**
@@ -416,20 +416,20 @@ public abstract class AbsCacheImpl<K, V> implements Cache<K, V>, Visitor {
 		}
 	}
 
-	public AutoRefreshHandler<K, V> getAutoRefresh() {
-		return autoRefresh;
+	public AutoRefreshHandler<K, V> getAutoRefreshHandler() {
+		return autoRefreshHandler;
 	}
 
-	public void setAutoRefresh(AutoRefreshHandler<K, V> autoRefresh) {
-		this.autoRefresh = autoRefresh;
+	public void setAutoRefreshHandler(AutoRefreshHandler<K, V> autoRefresh) {
+		this.autoRefreshHandler = autoRefresh;
 	}
 
-	public AutoSaveHandler<K, V> getAutoSave() {
-		return autoSave;
+	public AutoSaveHandler<K, V> getAutoSaveHandler() {
+		return autoSaveHandler;
 	}
 
-	public void setAutoSave(AutoSaveHandler<K, V> autoSave) {
-		this.autoSave = autoSave;
+	public void setAutoSaveHandler(AutoSaveHandler<K, V> autoSave) {
+		this.autoSaveHandler = autoSave;
 	}
 
 }
