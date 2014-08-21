@@ -2,11 +2,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.covito</groupId>
-		<artifactId>covito-kit</artifactId>
-		<version>1.0.0</version>
+		<groupId>org.covito</groupId>
+		<artifactId>kit-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>covito-core</artifactId>
+	<artifactId>kit-core</artifactId>
 
 	<properties>
 		<spring.version>3.2.6.RELEASE</spring.version>

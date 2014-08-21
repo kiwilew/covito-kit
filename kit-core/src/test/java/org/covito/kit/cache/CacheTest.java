@@ -68,6 +68,7 @@ public class CacheTest {
 
 
 	@Test
+	@Ignore
 	public void testAutoRefresh() {
 
 		System.out.println(CacheManager.getCacheNames());
