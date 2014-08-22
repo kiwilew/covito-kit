@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.covito</groupId>
-		<artifactId>kit-parent</artifactId>
+		<artifactId>covito-kit-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>covito-kit</artifactId>
@@ -17,16 +17,16 @@
 	</properties>
 	
 	<dependencies>
-		<dependency>
-			<groupId>org.covito</groupId>
-			<artifactId>kit-core</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.covito</groupId>
-			<artifactId>kit-web</artifactId>
-			<version>${project.parent.version}</version>
-		</dependency>
+	<dependency>
+		<groupId>org.covito</groupId>
+		<artifactId>covito-kit-core</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+	<dependency>
+		<groupId>org.covito</groupId>
+		<artifactId>covito-kit-web</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -52,8 +52,8 @@
 						<configuration>
 							<artifactSet>
 								<includes>
-									<include>org.covito:kit-core</include>
-									<include>org.covito:kit-web</include>
+									<include>org.covito:covito-kit-core</include>
+									<include>org.covito:covito-kit-web</include>
 								</includes>
 							</artifactSet>
 							<createSourcesJar>true</createSourcesJar>
