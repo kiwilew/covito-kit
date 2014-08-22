@@ -3,10 +3,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.covito</groupId>
-		<artifactId>kit-parent</artifactId>
+		<artifactId>covito-kit-parent</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
-	<artifactId>kit-web</artifactId>
+	<artifactId>covito-kit-web</artifactId>
 
 	<repositories>
 		<repository>
@@ -41,7 +41,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.covito</groupId>
-			<artifactId>kit-core</artifactId>
+			<artifactId>covito-kit-core</artifactId>
 			<version>${project.parent.version}</version>
 		</dependency>
 		<dependency>
