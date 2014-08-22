@@ -3,13 +3,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.covito</groupId>
-	<artifactId>kit-parent</artifactId>
+	<artifactId>covito-kit-parent</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<modules>
-		<module>kit-web</module>
-		<module>kit-core</module>
 		<module>covito-kit</module>
+		<module>covito-kit-web</module>
+		<module>covito-kit-core</module>
 	</modules>
 
 	<licenses>
