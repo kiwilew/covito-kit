@@ -10,6 +10,7 @@
 		<module>covito-kit-web</module>
 		<module>covito-kit-core</module>
     <module>covito-kit-test</module>
+    <module>covito-kit-site</module>
   </modules>
 
 	<licenses>

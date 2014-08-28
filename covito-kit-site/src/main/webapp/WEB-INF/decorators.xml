@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<decorators defaultdir="/WEB-INF/decorators">  
+	<excludes>
+	 	<pattern>index.jsp</pattern>
+	</excludes>
+    <decorator name="common" page="title.jsp">
+        <pattern>/error/404.jsp</pattern>
+        <pattern>/error/500.jsp</pattern>
+    </decorator>
+</decorators>

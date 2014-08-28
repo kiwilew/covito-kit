@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.covito</groupId>
+		<artifactId>covito-kit-parent</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>covito-kit-site</artifactId>
+	<packaging>war</packaging>
+
+	<!-- 项目属性 -->
+	<properties>
+		<spring.version>3.2.5.RELEASE</spring.version>
+		<druid.version>1.0.1</druid.version>
+		<!-- jdbc driver setting -->
+		<mysql.driver.version>5.1.13</mysql.driver.version>
+
+		<sitemesh.version>2.2.1</sitemesh.version>
+		<slf4j.version>1.7.6</slf4j.version>
+	</properties>
+	
+	<repositories>
+		<repository>
+			<id>jahia</id>
+			<name>jahia</name>
+			<url>http://maven.jahia.org/maven2/</url>
+		</repository>
+	</repositories>
+	
+	<dependencies>
+		<!-- TEST begin -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- TEST end -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>1.3.1</version>
+		</dependency>
+
+		<!-- connection pool -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>${druid.version}</version>
+		</dependency>
+
+		<!-- jdbc driver -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>${mysql.driver.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>opensymphony</groupId>
+			<artifactId>sitemesh</artifactId>
+			<version>${sitemesh.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- LOGGING begin -->
+		<!-- common-logging 实际调用slf4j -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- java.util.logging 实际调用slf4j -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jul-to-slf4j</artifactId>
+			<version>${slf4j.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<!-- log4jdbc -->
+		<dependency>
+			<groupId>org.lazyluke</groupId>
+			<artifactId>log4jdbc-remix</artifactId>
+			<version>0.2.7</version>
+			<scope>runtime</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>junit</artifactId>
+					<groupId>junit</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<!-- LOGGING end -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<version>1.1.41</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.9</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>3.3</version>
+		</dependency>
+		<dependency>
+			<groupId>com.octo.captcha</groupId>
+			<artifactId>jcaptcha</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.jhlabs</groupId>
+			<artifactId>imaging</artifactId>
+			<version>01012005</version>
+		</dependency>
+		<dependency>
+			<groupId>org.covito</groupId>
+			<artifactId>covito-kit-web</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<finalName>covito-kit-site</finalName>
+	</build>
+</project>

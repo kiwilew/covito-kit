@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	version="2.5">
+
+	<display-name>CovitoSite</display-name>
+
+	<!-- 激活Tomcat的defaultServlet来处理静态文件 -->
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.jpg</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.gif</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.png</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.js</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.css</url-pattern>
+	</servlet-mapping>
+
+	<!-- 加载Spring配置文件 -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>
+		/WEB-INF/config/site-context.xml
+	</param-value>
+	</context-param>
+
+	<!-- 多种测试环境配置 -->
+	<context-param>
+		<param-name>spring.profiles.default</param-name>
+		<param-value>production</param-value>
+	</context-param>
+
+	<!-- spring容器侦听 -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<!-- 编码设置 -->
+	<filter>
+		<filter-name>encodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- SiteMesh -->
+	<filter>
+		<filter-name>sitemeshFilter</filter-name>
+		<filter-class>com.opensymphony.module.sitemesh.filter.PageFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>sitemeshFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<!-- Spring MVC -->
+	<servlet>
+		<servlet-name>SiteConsole</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/config/site-servlet.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>SiteConsole</servlet-name>
+		<url-pattern>/console/*</url-pattern>
+	</servlet-mapping>
+
+	<!-- FileDownLoad-Servlet -->
+	<servlet>
+		<servlet-name>FileDownLoad-Servlet</servlet-name>
+		<servlet-class>org.covito.kit.web.file.FileDownLoadServlet</servlet-class>
+		<init-param>
+			<param-name>fileService</param-name>
+			<param-value>localFileServiceImpl</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>FileDownLoad-Servlet</servlet-name>
+		<url-pattern>/fileservice/file/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- FileDownLoad-Servlet -->
+	<servlet>
+		<servlet-name>Images-Servlet</servlet-name>
+		<servlet-class>org.covito.kit.web.file.ImagesServlet</servlet-class>
+		<init-param>
+			<param-name>fileService</param-name>
+			<param-value>localFileServiceImpl</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Images-Servlet</servlet-name>
+		<url-pattern>/fileservice/images/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- captcha-Servlet -->
+	<servlet>
+		<servlet-name>captcha-Servlet</servlet-name>
+		<servlet-class>org.covito.kit.web.captcha.JcaptchaServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>captcha-Servlet</servlet-name>
+		<url-pattern>/captcha.svl</url-pattern>
+	</servlet-mapping>
+	
+	<!-- classsrc-Servlet -->
+	<servlet>
+		<servlet-name>classsrc-Servlet</servlet-name>
+		<servlet-class>org.covito.kit.web.helper.svl.ClassSrcServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>classsrc-Servlet</servlet-name>
+		<url-pattern>/classsrc.svl</url-pattern>
+	</servlet-mapping>
+	
+	<!-- DruidStatView -->
+	<servlet>
+		<servlet-name>DruidStatView</servlet-name>
+		<servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+		<init-param>
+			<param-name>allow</param-name>
+			<param-value>127.0.0.1</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DruidStatView</servlet-name>
+		<url-pattern>/druid/*</url-pattern>
+	</servlet-mapping>
+
+	<!-- Session 配置 -->
+	<session-config>
+		<session-timeout>20</session-timeout>
+	</session-config>
+
+	<!-- 错误 页面配置 -->
+	<error-page>
+		<exception-type>java.lang.Throwable</exception-type>
+		<location>/error/500.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>500</error-code>
+		<location>/error/500.jsp</location>
+	</error-page>
+	<error-page>
+		<error-code>404</error-code>
+		<location>/error/404.jsp</location>
+	</error-page>
+
+</web-app>
