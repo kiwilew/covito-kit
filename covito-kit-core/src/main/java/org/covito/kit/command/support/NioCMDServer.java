@@ -29,17 +29,28 @@ public class NioCMDServer extends BaseCMDServer {
 	private String address; // 监听地址
 
 	private Selector selector;
+	
+	private Thread thread = new Thread(new Runnable() {
+		@Override
+		public void run() {
+			while (true) {
+				listen();
+			}
+		}
+		
+	});
 
 	public void startServer() {
 		try {
 			serverSocketChannel = ServerSocketChannel.open();
-			// 服务器配置为非阻塞  
+			// 服务器配置为非阻塞
 			serverSocketChannel.configureBlocking(false);
-			ServerSocket serverSocket = serverSocketChannel.socket();  
+			ServerSocket serverSocket = serverSocketChannel.socket();
 			serverSocket.setReuseAddress(true);
 			serverSocket.bind(new InetSocketAddress(address, port));
 			selector = Selector.open();
 			serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+			thread.start();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (ClosedChannelException e) {
@@ -50,13 +61,13 @@ public class NioCMDServer extends BaseCMDServer {
 	}
 
 	private void listen() {
-
 		try {
 			if (selector.select(10) == 0) {
 				return;
 			}
 		} catch (IOException e) {
-			throw new IllegalStateException(e);
+			e.printStackTrace();
+			return;
 		}
 
 		Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -64,42 +75,53 @@ public class NioCMDServer extends BaseCMDServer {
 		while (it.hasNext()) {
 			SelectionKey key = (SelectionKey) it.next();
 			it.remove();
-			ServerSocketChannel server = (ServerSocketChannel) key.channel();  
 			try {
 				if (key.isValid() && key.isAcceptable()) {
-					 // 返回为之创建此键的通道。  
-		            // 接受到此通道套接字的连接。  
-		            // 此方法返回的套接字通道（如果有）将处于阻塞模式。  
-		            SocketChannel client = server.accept();  
-		            // 配置为非阻塞  
-		            client.configureBlocking(false);  
-		            // 注册到selector，等待连接  
-		            client.register(selector, SelectionKey.OP_READ);  
-				}else if (key.isValid() && key.isReadable()) {
-					 // 返回为之创建此键的通道。  
-					SocketChannel client = (SocketChannel) key.channel();  
-					
-					ByteBuffer buffer  = ByteBuffer.allocate(4096);
-		            //将缓冲区清空以备下次读取  
-					buffer.clear();  
-					ByteArrayOutputStream bo=new ByteArrayOutputStream();
-		            while (true){
-		            	int i=client.read(buffer);
-                        if (i == -1){
-                        	break;
-                        }else{
-                        	bo.write(buffer.array(), 0, i);
-                        }
-                    }
-		            buffer.flip();
-		            System.out.println(bo.toString());
-				}else if (key.isValid() && key.isWritable()) {
-					
+					ServerSocketChannel server = (ServerSocketChannel) key.channel();
+					// 此方法返回的套接字通道（如果有）将处于阻塞模式。
+					SocketChannel client = server.accept();
+					// 配置为非阻塞
+					client.configureBlocking(false);
+					// 注册到selector，等待连接
+					client.register(selector, SelectionKey.OP_READ);
+				} else if (key.isValid() && key.isReadable()) {
+					// 返回为之创建此键的通道。
+					SocketChannel client = (SocketChannel) key.channel();
+
+					ByteBuffer buffer = ByteBuffer.allocate(1024);
+					// 将缓冲区清空以备下次读取
+					buffer.clear();
+					ByteArrayOutputStream bo = new ByteArrayOutputStream();
+					while (true) {
+						int i = client.read(buffer);
+						if (i == -1) {
+							break;
+						} else {
+							bo.write(buffer.array(), 0, i);
+						}
+					}
+					buffer.flip();
+					System.out.println(bo.toString());
+				} else if (key.isValid() && key.isWritable()) {
+					// 获取此通道的SocketChannel
+					SocketChannel client = (SocketChannel) key.channel();
+					ByteBuffer output = (ByteBuffer) key.attachment();
+					// 如果缓存区没了,重置一下
+					if (!output.hasRemaining()) {
+						output.rewind();
+					}
+					// 在此通道内写东西
+					client.write(output);
 				}
 			} catch (Exception e) {
-				
-			} finally{
-	            key.cancel();
+				logger.error(e.getMessage());
+				key.cancel();
+			} finally {
+				try {
+					key.channel().close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
