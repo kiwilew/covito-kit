@@ -11,6 +11,14 @@
 	<packaging>war</packaging>
 	<name>covito-kit-test Maven Webapp</name>
 	<url>http://maven.apache.org</url>
+	
+	<properties>
+		<poi.version>3.9</poi.version>
+		<commons-lang3.version>3.1</commons-lang3.version>
+		<commons-io.version>2.4</commons-io.version>
+		<guava.version>14.0.1</guava.version>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -30,6 +38,41 @@
 			<version>2.2</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- poi office -->
+	  	<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi</artifactId>
+		    <version>${poi.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml</artifactId>
+		    <version>${poi.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.poi</groupId>
+		    <artifactId>poi-ooxml-schemas</artifactId>
+		    <version>${poi.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons-lang3.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io.version}</version>
+		</dependency>
+		
+		<!-- google java library -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${guava.version}</version>
+		</dependency>
+		
 	</dependencies>
 	<build>
 		<finalName>covito-kit-test</finalName>
