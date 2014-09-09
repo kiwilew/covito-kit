@@ -602,7 +602,7 @@ public class ExcelReader {
 			return 0;
 		}
 
-		public int getFirstColumn() {
+		public Integer getFirstColumn() {
 			// TODO Auto-generated method stub
 			return 0;
 		}

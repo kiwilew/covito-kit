@@ -15,9 +15,9 @@ import java.lang.annotation.Target;
 public @interface ExcelField {
 
 	/**
-	 * 导入——在excel表中的列名，如A,B,C
+	 * 字段排序（升序）
 	 */
-	String index();
+	int sort();
 	
 	/**
 	 * 导出——字段标题（需要添加批注请用“**”分隔，标题**批注，仅对导出模板有效）
@@ -28,11 +28,6 @@ public @interface ExcelField {
 	 * 动作范围
 	 */
 	ExAct type() default ExAct.both;
-
-	/**
-	 * 导出——字段字段排序（升序）
-	 */
-	int sort() default 0;
 	
 	/**
 	 * 字段值处理器
