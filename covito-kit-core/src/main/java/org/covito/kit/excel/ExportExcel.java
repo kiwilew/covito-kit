@@ -331,37 +331,48 @@ public class ExportExcel {
 	 * 
 	 * @return list 数据列表
 	 */
-	public <E> ExportExcel setDataList(List<E> list) {
+	public <E> void setDataList(List<E> list) {
 		for (E e : list) {
 			int colunm = 0;
 			Row row = this.addRow();
-			StringBuilder sb = new StringBuilder();
-			for (Object[] os : annotationList) {
-				ExcelField ef = (ExcelField) os[0];
-				ValueHandler handler = (ValueHandler) os[2];
-				Object val = null;
-				// Get entity value
-				try {
-					if (os[1] instanceof Field) {
-						val = Reflections.invokeGetter(e, ((Field) os[1]).getName());
-					} else if (os[1] instanceof Method) {
-						val = Reflections.invokeMethod(e, ((Method) os[1]).getName(),
-								new Class[] {}, new Object[] {});
+			if(annotationList.size()==0){
+				if(e instanceof Object[]){
+					for(Object s:(Object[])e){
+						this.addCell(row, colunm++, s);
 					}
-				} catch (Exception ex) {
-					// Failure to ignore
-					log.info(ex.toString());
-					val = "";
+				}else if(e instanceof List){
+					for(Object s:(List)e){
+						this.addCell(row, colunm++, s);
+					}
 				}
-				if (handler != null) {
-					val = handler.expConvert(val);
+			}else{
+				for (Object[] os : annotationList) {
+					ExcelField ef = (ExcelField) os[0];
+					ValueHandler handler = (ValueHandler) os[2];
+					Object val = null;
+					// Get entity value
+					try {
+						if (os[1] instanceof Field) {
+							val = Reflections.invokeGetter(e, ((Field) os[1]).getName());
+						} else if (os[1] instanceof Method) {
+							val = Reflections.invokeMethod(e, ((Method) os[1]).getName(),
+									new Class[] {}, new Object[] {});
+						}
+					} catch (Exception ex) {
+						// Failure to ignore
+						log.info(ex.toString());
+						val = "";
+					}
+					if (handler != null) {
+						val = handler.expConvert(val);
+					}
+					this.addCell(row, colunm++, val, ef.align());
 				}
-				this.addCell(row, colunm++, val, ef.align());
-				sb.append(val + ", ");
 			}
 		}
-		return this;
 	}
+	
+	
 
 	/**
 	 * 输出数据流
@@ -408,42 +419,5 @@ public class ExportExcel {
 	public void dispose() {
 		wb.dispose();
 	}
-
-	// /**
-	// * 导出测试
-	// */
-	// public static void main(String[] args) throws Throwable {
-	//
-	// List<String> headerList = Lists.newArrayList();
-	// for (int i = 1; i <= 10; i++) {
-	// headerList.add("表头"+i);
-	// }
-	//
-	// List<String> dataRowList = Lists.newArrayList();
-	// for (int i = 1; i <= headerList.size(); i++) {
-	// dataRowList.add("数据"+i);
-	// }
-	//
-	// List<List<String>> dataList = Lists.newArrayList();
-	// for (int i = 1; i <=1000000; i++) {
-	// dataList.add(dataRowList);
-	// }
-	//
-	// ExportExcel ee = new ExportExcel("表格标题", headerList);
-	//
-	// for (int i = 0; i < dataList.size(); i++) {
-	// Row row = ee.addRow();
-	// for (int j = 0; j < dataList.get(i).size(); j++) {
-	// ee.addCell(row, j, dataList.get(i).get(j));
-	// }
-	// }
-	//
-	// ee.writeFile("target/export.xlsx");
-	//
-	// ee.dispose();
-	//
-	// log.debug("Export success.");
-	//
-	// }
 
 }

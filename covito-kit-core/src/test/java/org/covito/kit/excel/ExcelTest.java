@@ -26,6 +26,7 @@ import org.covito.kit.excel.ExcelField.ValueHandler;
 import org.junit.Test;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 
 /**
  * 一句话功能简述
@@ -55,6 +56,31 @@ public class ExcelTest {
 		}
 		exe.setDataList(list);
 		exe.writeFile("target/export.xlsx");
+	}
+	
+	@Test
+	public void testExportNormal() {
+		
+		List<String> headerList = Lists.newArrayList();
+		for (int i = 1; i <= 10; i++) {
+			headerList.add("表头" + i);
+		}
+
+		List<String> dataRowList = Lists.newArrayList();
+		for (int i = 1; i <= headerList.size(); i++) {
+			dataRowList.add("数据" + i);
+		}
+
+		List<List<String>> dataList = Lists.newArrayList();
+		for (int i = 1; i <= 1000000; i++) {
+			dataList.add(dataRowList);
+		}
+
+		ExportExcel ee = new ExportExcel("表格标题", headerList);
+
+		ee.setDataList(dataList);
+
+		ee.writeFile("target/exportNormal.xlsx");
 	}
 
 	@Test
