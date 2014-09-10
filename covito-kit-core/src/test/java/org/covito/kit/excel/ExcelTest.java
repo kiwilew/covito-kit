@@ -17,11 +17,15 @@
 package org.covito.kit.excel;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.poi.ss.usermodel.Row;
+import org.covito.kit.excel.ExcelField.ExAct;
 import org.covito.kit.excel.ExcelField.ValueHandler;
 import org.junit.Test;
+
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * 一句话功能简述
@@ -33,10 +37,29 @@ import org.junit.Test;
  * @version [v1.0, 2014年9月9日]
  */
 public class ExcelTest {
+	
+	@Test
+	public void testExport() {
+		ExportExcel exe=new ExportExcel("测试导出", Model.class);
+		List<Model> list=new ArrayList<ExcelTest.Model>();
+		for(int i=0;i<100;i++){
+			Model m=new Model();
+			m.setSn(i+1);
+			m.setName("Name"+i);
+			m.setMobile("15902152565");
+			m.setPart(i+"");
+			m.setPhone("9562");
+			m.setEmail("2343@34.com");
+			m.setModel(m);
+			list.add(m);
+		}
+		exe.setDataList(list);
+		exe.writeFile("target/export.xlsx");
+	}
 
 	@Test
 	public void testImport() throws IOException {
-		ImportExcel ei = new ImportExcel("target/export.xls", 1);
+		ImportExcel ei = new ImportExcel("target/export.xlsx", 1);
 		for (int i = ei.getDataRowNum(); i < ei.getLastDataRowNum(); i++) {
 			Row row = ei.getRow(i);
 			for (int j = 0; j < ei.getLastCellNum(); j++) {
@@ -48,48 +71,82 @@ public class ExcelTest {
 	}
 	
 	@Test
-	public void testImportUserBean() throws IOException, InstantiationException, IllegalAccessException {
-		ImportExcel ei = new ImportExcel("target/export.xls", 7);
+	public void testImportUserBean(){
+		ImportExcel ei = new ImportExcel("target/export.xlsx", 2);
 		List<Model> ml=ei.getDataList(Model.class);
 		for(Model m:ml){
 			System.out.println(m);
 		}
 	}
 	
-	public static class EnterHandler implements ValueHandler{
-
-		/**
-		 * {@inheritDoc}
-		 *
-		 * @param value
-		 * @return
-		 */
+	public static class EnterHandler implements ValueHandler<String, String>{
 		@Override
-		public Object dealValue(Object value) {
+		public String impConvert(String value) {
 			return value.toString().replace("\n", "");
+		}
+
+		@Override
+		public String expConvert(String value) {
+			return value;
+		}
+	}
+	
+	public static class JsonHandler implements ValueHandler<String,Model>{
+
+		@Override
+		public Model impConvert(String value) {
+			Model m=JSONObject.parseObject(value, Model.class);
+			return m;
+		}
+
+		@Override
+		public String expConvert(Model value) {
+			String json=JSONObject.toJSONString(value);
+			return json;
+		}
+		
+	}
+	public static class PartHandler implements ValueHandler<String,String>{
+		
+		@Override
+		public String impConvert(String value) {
+			return value;
+		}
+		
+		@Override
+		public String expConvert(String value) {
+			if(value.length()==1){
+				return "Part One";
+			}else if(value.startsWith("1")||value.startsWith("2")||value.startsWith("3")){
+				return "Part Two";
+			}else{
+				return "Part Three";
+			}
 		}
 		
 	}
 	
 	public static class Model{
-		@ExcelField(sort = 0)
-		private String sn;
-		@ExcelField(sort = 1)
+		@ExcelField(sort = 0,title="序号")
+		private Integer sn;
+		@ExcelField(sort = 1,title="部门",handler=PartHandler.class)
 		private String part;
-		@ExcelField(sort = 2)
+		@ExcelField(sort = 2,title="姓名")
 		private String name;
-		@ExcelField(sort = 3, handler=EnterHandler.class )
+		@ExcelField(sort = 3,title="手机",handler=EnterHandler.class )
 		private String mobile;
-		@ExcelField(sort = 4)
+		@ExcelField(sort = 4,title="电话")
 		private String phone;
-		@ExcelField(sort = 5)
+		@ExcelField(sort = 5,title="邮箱")
 		private String email;
+		@ExcelField(sort = 6,title="Json对象",handler=JsonHandler.class,type=ExAct.exp)
+		private Model model;
 		/**
 		 * Get sn
 		 *
 		 * @return the sn
 		 */
-		public String getSn() {
+		public Integer getSn() {
 			return sn;
 		}
 		/**
@@ -97,7 +154,7 @@ public class ExcelTest {
 		 *
 		 * @param sn the sn to set
 		 */
-		public void setSn(String sn) {
+		public void setSn(Integer sn) {
 			this.sn = sn;
 		}
 		/**
@@ -181,6 +238,12 @@ public class ExcelTest {
 			this.email = email;
 		}
 		
+		public Model getModel() {
+			return model;
+		}
+		public void setModel(Model model) {
+			this.model = model;
+		}
 		/**
 		 * {@inheritDoc}
 		 *

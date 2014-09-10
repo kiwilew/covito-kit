@@ -2,6 +2,7 @@ package org.covito.kit.excel;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -15,14 +16,18 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.covito.kit.excel.ExcelField.ExAct;
 import org.covito.kit.excel.ExcelField.NULLHolder;
@@ -63,6 +68,11 @@ public class ImportExcel {
 	 * 合并单元格value Map
 	 */
 	private Map<CellRangeAddress, Object> rangesMap = new HashMap<CellRangeAddress, Object>();
+	
+	/**
+	 * 注解列表（Object[]{ ExcelField, Field/Method, impHandler }）
+	 */
+	private List<Object[]> annotationList = null;
 
 	/**
 	 * 构造函数
@@ -74,7 +84,7 @@ public class ImportExcel {
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 */
-	public ImportExcel(String fileName, int headerNum) throws IOException {
+	public ImportExcel(String fileName, int headerNum) {
 		this(new File(fileName), headerNum);
 	}
 
@@ -88,7 +98,7 @@ public class ImportExcel {
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 */
-	public ImportExcel(File file, int headerNum) throws IOException {
+	public ImportExcel(File file, int headerNum) {
 		this(file, headerNum, 0);
 	}
 
@@ -104,7 +114,7 @@ public class ImportExcel {
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 */
-	public ImportExcel(String fileName, int headerNum, int sheetIndex) throws IOException {
+	public ImportExcel(String fileName, int headerNum, int sheetIndex){
 		this(new File(fileName), headerNum, sheetIndex);
 	}
 
@@ -120,7 +130,7 @@ public class ImportExcel {
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 */
-	public ImportExcel(File file, int headerNum, int sheetIndex) throws IOException {
+	public ImportExcel(File file, int headerNum, int sheetIndex) {
 		if (file == null) {
 			throw new RuntimeException("导入文档为空!");
 		} else if (file.getName().toLowerCase().endsWith("xls")) {
@@ -130,7 +140,11 @@ public class ImportExcel {
 		} else {
 			throw new RuntimeException("文档格式不正确!");
 		}
-		init(new FileInputStream(file), headerNum, sheetIndex);
+		try {
+			init(new FileInputStream(file), headerNum, sheetIndex);
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -162,14 +176,18 @@ public class ImportExcel {
 	 * @param sheetIndex
 	 * @throws IOException
 	 */
-	private void init(InputStream is, int headerNum, int sheetIndex) throws IOException {
+	private void init(InputStream is, int headerNum, int sheetIndex){
 		if (is == null) {
 			throw new RuntimeException("InputStream is null");
 		}
-		if (isXS) {
-			this.wb = new XSSFWorkbook(is);
-		} else {
-			this.wb = new HSSFWorkbook(is);
+		try {
+			if (isXS) {
+				this.wb = new XSSFWorkbook(is);
+			} else {
+				this.wb = new HSSFWorkbook(is);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		if (this.wb.getNumberOfSheets() < sheetIndex) {
 			throw new RuntimeException("文档中没有工作表!");
@@ -261,7 +279,20 @@ public class ImportExcel {
 				} else if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					val = cell.getStringCellValue();
 				} else if (cell.getCellType() == Cell.CELL_TYPE_FORMULA) {
-					val = cell.getCellFormula();
+					FormulaEvaluator evaluator;
+					if(isXS){
+						evaluator = new XSSFFormulaEvaluator((XSSFWorkbook)sheet.getWorkbook());
+					}else{
+						evaluator = new HSSFFormulaEvaluator((HSSFWorkbook)sheet.getWorkbook());
+					}
+					int result=evaluator.evaluateFormulaCell(cell);
+					if(HSSFCell.CELL_TYPE_ERROR==result){
+						val = cell.getErrorCellValue();
+					}else if (result == HSSFCell.CELL_TYPE_NUMERIC) {
+						val = cell.getNumericCellValue();
+					} else if (result == HSSFCell.CELL_TYPE_STRING) {
+						val = cell.getRichStringCellValue().toString();
+					}
 				} else if (cell.getCellType() == Cell.CELL_TYPE_BOOLEAN) {
 					val = cell.getBooleanCellValue();
 				} else if (cell.getCellType() == Cell.CELL_TYPE_ERROR) {
@@ -274,6 +305,51 @@ public class ImportExcel {
 		return val;
 	}
 
+	private <E> void initAnnotationList(Class<E> cls) throws InstantiationException, IllegalAccessException{
+		if(annotationList!=null){
+			return;
+		}
+		annotationList =new ArrayList<Object[]>();
+		Field[] fs = cls.getDeclaredFields();
+		for (Field f : fs) {
+			ExcelField ef = f.getAnnotation(ExcelField.class);
+			if (ef != null && ef.type() != ExAct.exp) {
+				Class<?> valType = f.getType();
+				ValueHandler handler=null;
+				if (ef.handler() != NULLHolder.class) {
+					handler= ef.handler().newInstance();
+				}
+				annotationList.add(new Object[] { ef, f, handler, valType });
+			}
+		}
+		// Get annotation method
+		Method[] ms = cls.getDeclaredMethods();
+		for (Method m : ms) {
+			ExcelField ef = m.getAnnotation(ExcelField.class);
+			if (ef != null && ef.type() != ExAct.exp) {
+				ValueHandler handler=null;
+				if (ef.handler() != NULLHolder.class) {
+					handler = ef.handler().newInstance();
+				}
+				
+				Class<?> valType=Class.class;
+				if ("get".equals(m.getName().substring(0, 3))) {
+					valType = m.getReturnType();
+				} else if ("set".equals(m.getName().substring(0, 3))) {
+					valType = m.getParameterTypes()[0];
+				}
+				annotationList.add(new Object[] { ef, m, handler,valType });
+			}
+		}
+		// Field sorting
+		Collections.sort(annotationList, new Comparator<Object[]>() {
+			public int compare(Object[] o1, Object[] o2) {
+				return new Integer(((ExcelField) o1[0]).sort()).compareTo(new Integer(
+						((ExcelField) o2[0]).sort()));
+			};
+		});
+	}
+	
 	/**
 	 * 获取导入数据列表
 	 * 
@@ -284,73 +360,39 @@ public class ImportExcel {
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
 	 */
-	public <E> List<E> getDataList(Class<E> cls) throws InstantiationException, IllegalAccessException {
-		List<Object[]> annotationList = new ArrayList<Object[]>();
-		// Get annotation field
-		Field[] fs = cls.getDeclaredFields();
-		for (Field f : fs) {
-			ExcelField ef = f.getAnnotation(ExcelField.class);
-			if (ef != null && ef.type() != ExAct.exp) {
-				if (ef.handler() == NULLHolder.class) {
-					annotationList.add(new Object[] { ef, f, null });
-				} else {
-					ValueHandler handler = ef.handler().newInstance();
-					annotationList.add(new Object[] { ef, f, handler });
-				}
-			}
+	public <E> List<E> getDataList(Class<E> cls) {
+		
+		try {
+			initAnnotationList(cls);
+		}catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-		// Get annotation method
-		Method[] ms = cls.getDeclaredMethods();
-		for (Method m : ms) {
-			ExcelField ef = m.getAnnotation(ExcelField.class);
-			if (ef != null && ef.type() != ExAct.exp) {
-				if (ef.handler() == NULLHolder.class) {
-					annotationList.add(new Object[] { ef, m, null });
-				} else {
-					ValueHandler handler = ef.handler().newInstance();
-					annotationList.add(new Object[] { ef, m, handler });
-				}
-			}
-		}
-		// Field sorting
-		Collections.sort(annotationList, new Comparator<Object[]>() {
-			public int compare(Object[] o1, Object[] o2) {
-				return new Integer(((ExcelField) o1[0]).sort()).compareTo(new Integer(
-						((ExcelField) o2[0]).sort()));
-			};
-		});
-		// log.debug("Import column count:"+annotationList.size());
-		// Get excel data
+		
 		List<E> dataList = new ArrayList<E>();
 		for (int i = this.getDataRowNum(); i < this.getLastDataRowNum(); i++) {
-			E e = cls.newInstance();
-			int column = 0;
-			
 			Row row = this.getRow(i);
 			if(row==null){
 				continue;
 			}
 			
+			E e;
+			try {
+				e = cls.newInstance();
+			} catch (Exception e1) {
+				throw new RuntimeException(e1);
+			}
+			int column = 0;
 			for (Object[] os : annotationList) {
 				Object val = this.getCellValue(row, column++);
 				
 				if (val == null) {
 					continue;
 				}
-				// Get param type and type cast
-				Class<?> valType = Class.class;
-				if (os[1] instanceof Field) {
-					valType = ((Field) os[1]).getType();
-				} else if (os[1] instanceof Method) {
-					Method method = ((Method) os[1]);
-					if ("get".equals(method.getName().substring(0, 3))) {
-						valType = method.getReturnType();
-					} else if ("set".equals(method.getName().substring(0, 3))) {
-						valType = ((Method) os[1]).getParameterTypes()[0];
-					}
-				}
-
+				
+				ValueHandler handler=(ValueHandler)os[2];
+				Class<?> valType = (Class<?>)os[3];
 				try {
+					
 					if (valType == String.class) {
 						String s = String.valueOf(val.toString());
 						if (StringUtils.endsWith(s, ".0")) {
@@ -371,7 +413,7 @@ public class ImportExcel {
 					}
 					
 					if(os[2]!=null){
-						val=((ValueHandler)os[2]).dealValue(val);
+						val=handler.impConvert(val);
 					}
 				} catch (Exception ex) {
 					log.info("Get cell value [" + i + "," + column + "] error: " + ex.toString());
