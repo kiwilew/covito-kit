@@ -39,33 +39,26 @@ public class ClassUtil extends ClassUtils{
 		if (clsName == null) {
 			return null;
 		}
-		Class cls = null;
+		Class<?> cls = null;
 		try {
 			cls = Class.forName(clsName);
 		} catch (Exception e) {
 			return null;
 		}
+		
 		URL result = null;
 		final String clsAsResource = cls.getName().replace('.', '/').concat(".class");
 		final ProtectionDomain pd = cls.getProtectionDomain();
-		// java.lang.Class contract does not specify if 'pd' can ever be null;
-		// it is not the case for Sun's implementations, but guard against null
-		// just in case:
 		if (pd != null) {
 			final CodeSource cs = pd.getCodeSource();
-			// 'cs' can be null depending on the classloader behavior:
-			if (cs != null)
+			if (cs != null){
 				result = cs.getLocation();
+			}
 			if (result != null) {
-				// Convert a code source location into a full class file
-				// location
-				// for some common cases:
 				if ("file".equals(result.getProtocol())) {
 					try {
-						if (result.toExternalForm().endsWith(".jar")
-								|| result.toExternalForm().endsWith(".zip"))
-							result = new URL("jar:".concat(result.toExternalForm()).concat("!/")
-									.concat(clsAsResource));
+						if (result.toExternalForm().endsWith(".jar")|| result.toExternalForm().endsWith(".zip"))
+							result = new URL("jar:".concat(result.toExternalForm()).concat("!/").concat(clsAsResource));
 						else if (new File(result.getFile()).isDirectory()) {
 							result = new URL(result, clsAsResource);
 						}
@@ -75,12 +68,8 @@ public class ClassUtil extends ClassUtils{
 			}
 		}
 		if (result == null) {
-			// Try to find 'cls' definition as a resource; this is not
-			// document．d to be legal, but Sun's implementations seem to //allow
-			// this:
 			final ClassLoader clsLoader = cls.getClassLoader();
-			result = clsLoader != null ? clsLoader.getResource(clsAsResource) : ClassLoader
-					.getSystemResource(clsAsResource);
+			result = clsLoader != null ? clsLoader.getResource(clsAsResource) : ClassLoader.getSystemResource(clsAsResource);
 		}
 		return result;
 	}

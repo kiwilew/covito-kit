@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.covito.kit.excel.ExcelField.ExAct;
 import org.covito.kit.excel.ExcelField.ValueHandler;
@@ -94,6 +96,19 @@ public class ExcelTest {
 			}
 			System.out.print("\n");
 		}
+	}
+	
+	@Test
+	public void testToString(){
+		Model m=new Model();
+		m.setSn(3);
+		m.setName("Name"+4);
+		m.setMobile("15902152565");
+		m.setPart(2+"");
+		m.setPhone("9562");
+		m.setEmail("2343@34.com");
+		m.setModel(m);
+		System.out.println(m.toString());
 	}
 	
 	@Test
@@ -277,7 +292,9 @@ public class ExcelTest {
 		 */
 		@Override
 		public String toString() {
-			return String.format("%1$-5s|%2$-20s|%3$-30s|%4$-30s|%5$-8s|%6$-120s", sn,part,name,mobile,phone,email);
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.SIMPLE_STYLE);
+			
+			//return String.format("%1$-5s|%2$-20s|%3$-30s|%4$-30s|%5$-8s|%6$-120s", sn,part,name,mobile,phone,email);
 		}
 		
 	}
