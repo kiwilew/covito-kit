@@ -14,14 +14,14 @@ public class MathTest {
 		//分数
 		Fraction f=Fraction.getFraction("1/4");
 		Fraction f1=Fraction.getFraction("1/2");
-		//f1+f
+		//f+f1
 		System.out.println(f.add(f1));//3/4
 		//f/f1
 		System.out.println(f.divideBy(f1));//1/2
-		//f1*f
+		//f*f1
 		System.out.println(f.multiplyBy(f1));//1/8
 		//f-f1
-		System.out.println(f.subtract(f1));
+		System.out.println(f.subtract(f1));//-1/4
 		
 	}
 }
