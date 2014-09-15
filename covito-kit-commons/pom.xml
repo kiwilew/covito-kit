@@ -7,16 +7,23 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>covito-kit-commons</artifactId>
-	
+
 	<properties>
 		<commons-lang3.version>3.1</commons-lang3.version>
+		<commons-beanutils.version>1.9.2</commons-beanutils.version>
 	</properties>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>${commons-lang3.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>${commons-beanutils.version}</version>
+		</dependency>
+
 	</dependencies>
 </project>
