@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.covito</groupId>
 	<artifactId>covito-kit-parent</artifactId>
@@ -7,11 +8,12 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>covito-kit</module>
-		<module>covito-kit-web</module>
+		<module>covito-kit-commons</module>
 		<module>covito-kit-core</module>
-    <module>covito-kit-test</module>
-    <module>covito-kit-site</module>
-  </modules>
+		<module>covito-kit-test</module>
+		<module>covito-kit-web</module>
+		<module>covito-kit-site</module>
+	</modules>
 
 	<licenses>
 		<license>
@@ -115,7 +117,7 @@
 					</additionalProjectnatures>
 				</configuration>
 			</plugin>
-			
+
 			<!-- resource插件 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -123,7 +125,7 @@
 				<version>2.6</version>
 			</plugin>
 
-			<!-- source插件 生成源码�?-->
+			<!-- source插件 生成源码�? -->
 			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>2.1</version>
@@ -165,7 +167,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
+
 			<!-- 单元测试插件 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -198,14 +200,14 @@
 				<artifactId>maven-clean-plugin</artifactId>
 				<version>2.5</version>
 			</plugin>
-			
+
 			<!-- dependency插件 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>2.5.1</version>
 			</plugin>
-			
+
 			<!-- jar插件 打包 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
