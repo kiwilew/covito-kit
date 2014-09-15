@@ -17,6 +17,7 @@
 		<commons-lang3.version>3.1</commons-lang3.version>
 		<commons-io.version>2.4</commons-io.version>
 		<guava.version>14.0.1</guava.version>
+		<spring.version>3.2.6.RELEASE</spring.version>
 	</properties>
 	
 	<dependencies>
@@ -72,6 +73,11 @@
 			<version>${guava.version}</version>
 		</dependency>
 		
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>covito-kit-test</finalName>
